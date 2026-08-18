@@ -484,7 +484,8 @@ function deleteDeckPrompt(deckId) {
 }
 
 // ── HS 트리 드릴 (차별화 §4.7 우선순위 1) ──
-let hsDrill = null; // { dir, q, answered, correct }
+// level: 'chapter'(류 2단위) | 'heading'(호 4단위), dir: 'forward'|'reverse'
+let hsDrill = null; // { level, dir, q, answered, correct }
 function renderHsDrill() {
   const frag = document.createDocumentFragment();
   const tree = state.hsTree;
@@ -492,28 +493,38 @@ function renderHsDrill() {
   frag.appendChild(el('h2', {}, '🌳 HS 품목분류 트리 드릴'));
   frag.appendChild(el('div', { class: 'notice' }, [
     el('strong', {}, '가드레일: '),
-    '부(21) 구조는 국제표준 골격입니다. 호(4단위) 이하 세부는 앱이 생성하지 않으며, ',
+    '부(21)·류(2단위) 구조는 WCO 국제표준 골격입니다. 호(4단위) 이하 세부는 앱이 생성하지 않으며, ',
     el('strong', {}, '현행 공식 기본서로 사용자가 입력'),
-    '한 항목만 드릴에 출제됩니다.',
+    '한 항목만 호 드릴에 출제됩니다.',
   ]));
 
-  // 드릴 위젯
-  const headings = tree.headings;
+  const hasChapters = tree.chapters.length > 0;
+  const hasHeadings = tree.headings.length > 0;
   const drillBox = el('div', { class: 'drill-box' });
-  if (headings.length === 0) {
-    drillBox.appendChild(el('p', { class: 'hint' }, '드릴할 호(4단위) 항목이 없습니다. 아래에서 추가하세요.'));
+  if (!hasChapters && !hasHeadings) {
+    drillBox.appendChild(el('p', { class: 'hint' }, '드릴할 항목이 없습니다.'));
   } else {
     if (!hsDrill) newHsQuestion();
     drillBox.appendChild(renderHsQuestion());
   }
+
+  const level = hsDrill ? hsDrill.level : 'chapter';
+  const dir = hsDrill ? hsDrill.dir : 'forward';
+  const modeBar = (hasChapters || hasHeadings) ? el('div', { class: 'drill-mode' }, [
+    el('span', { class: 'mode-label' }, '범위'),
+    el('button', { class: 'btn tiny' + (level === 'chapter' ? ' active' : ''), disabled: !hasChapters,
+      onclick: () => { newHsQuestion('chapter'); render(); } }, `류 ${tree.chapters.length}`),
+    el('button', { class: 'btn tiny' + (level === 'heading' ? ' active' : ''), disabled: !hasHeadings,
+      onclick: () => { newHsQuestion('heading'); render(); } }, `호 ${tree.headings.length}`),
+    el('span', { class: 'mode-label' }, '방향'),
+    el('button', { class: 'btn tiny' + (dir === 'forward' ? ' active' : ''),
+      onclick: () => { newHsQuestion(level, 'forward'); render(); } }, '이름→코드'),
+    el('button', { class: 'btn tiny' + (dir === 'reverse' ? ' active' : ''),
+      onclick: () => { newHsQuestion(level, 'reverse'); render(); } }, '코드→이름'),
+  ]) : null;
+
   frag.appendChild(el('section', {}, [
-    el('div', { class: 'section-head' }, [
-      el('h3', {}, '드릴'),
-      headings.length ? el('div', { class: 'drill-mode' }, [
-        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'forward' ? ' active' : ''), onclick: () => { newHsQuestion('forward'); render(); } }, '정방향(이름→호)'),
-        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'reverse' ? ' active' : ''), onclick: () => { newHsQuestion('reverse'); render(); } }, '역방향(호→이름)'),
-      ]) : null,
-    ]),
+    el('div', { class: 'section-head' }, [el('h3', {}, '드릴'), modeBar]),
     drillBox,
   ]));
 
@@ -526,41 +537,62 @@ function renderHsDrill() {
   return frag;
 }
 
-function newHsQuestion(dir) {
-  const headings = state.hsTree.headings;
-  if (!headings.length) { hsDrill = null; return; }
-  const useDir = dir || (hsDrill ? hsDrill.dir : (Math.random() < 0.5 ? 'forward' : 'reverse'));
-  const q = headings[Math.floor(Math.random() * headings.length)];
-  hsDrill = { dir: useDir, q, answered: false, correct: null };
+function newHsQuestion(level, dir) {
+  const tree = state.hsTree;
+  let useLevel = level || (hsDrill ? hsDrill.level : 'chapter');
+  let pool = useLevel === 'chapter' ? tree.chapters : tree.headings;
+  if (!pool.length) {
+    // 비어 있으면 다른 범위로 대체
+    useLevel = useLevel === 'chapter' ? 'heading' : 'chapter';
+    pool = useLevel === 'chapter' ? tree.chapters : tree.headings;
+    if (!pool.length) { hsDrill = null; return; }
+  }
+  const useDir = dir || (hsDrill ? hsDrill.dir : 'forward');
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  hsDrill = { level: useLevel, dir: useDir, q, answered: false, correct: null };
+}
+
+// 현재 문제의 상위 맥락(류→부, 호→류) 노드
+function hsContext(level, q) {
+  if (level === 'chapter') {
+    const sec = state.hsTree.sections.find((s) => s.no === q.section);
+    return sec ? el('div', { class: 'drill-context' }, `제${sec.no}부 · ${sec.title}`) : null;
+  }
+  const ch = state.hsTree.chapters.find((c) => c.code === q.chapter);
+  return ch ? el('div', { class: 'drill-context' }, `제${ch.code}류 · ${ch.title}`) : null;
 }
 
 function renderHsQuestion() {
-  const { dir, q, answered } = hsDrill;
-  const chapter = state.hsTree.chapters.find((c) => c.code === q.chapter);
+  const { level, dir, q, answered } = hsDrill;
+  const isCh = level === 'chapter';
+  const unit = isCh ? '류(2단위)' : '호(4단위)';
+  const codeLen = isCh ? 2 : 4;
+  const context = hsContext(level, q);
   const wrap = el('div', {});
+
   if (dir === 'forward') {
     wrap.appendChild(el('div', { class: 'drill-q' }, [
-      el('div', { class: 'drill-prompt' }, '다음 물품은 몇 호(4단위)인가?'),
+      el('div', { class: 'drill-prompt' }, `다음은 몇 ${unit}인가?`),
       el('div', { class: 'drill-subject' }, q.title),
     ]));
     if (!answered) {
-      const input = el('input', { class: 'inp code-input', inputmode: 'numeric', maxlength: '4', placeholder: '____', 'aria-label': '호 4자리' });
-      const submit = () => {
-        hsDrill.answered = true;
-        hsDrill.correct = input.value.trim() === q.code;
-        render();
-      };
+      const input = el('input', { class: 'inp code-input', inputmode: 'numeric', maxlength: String(codeLen), placeholder: isCh ? '__' : '____', 'aria-label': `${unit} 코드` });
+      const submit = () => { hsDrill.answered = true; hsDrill.correct = input.value.trim() === q.code; render(); };
       wrap.appendChild(el('form', { class: 'drill-answer', onsubmit: (e) => { e.preventDefault(); submit(); } }, [
-        input,
-        el('button', { class: 'btn primary', type: 'submit' }, '확인'),
+        input, el('button', { class: 'btn primary', type: 'submit' }, '확인'),
       ]));
     } else {
-      wrap.appendChild(renderHsResult(q.code, `${q.code} — ${q.title}`, chapter));
+      wrap.appendChild(el('div', { class: 'drill-reveal' }, [
+        el('div', { class: 'drill-verdict ' + (hsDrill.correct ? 'ok' : 'no') }, hsDrill.correct ? '✓ 정답' : '✕ 오답'),
+        el('div', { class: 'drill-answer-text', html: `정답: <code>${esc(isCh ? '제' + q.code + '류' : q.code)}</code> — ${esc(q.title)}` }),
+        context,
+        el('button', { class: 'btn primary', onclick: () => { newHsQuestion(); render(); } }, '다음 문제'),
+      ]));
     }
   } else {
     wrap.appendChild(el('div', { class: 'drill-q' }, [
-      el('div', { class: 'drill-prompt' }, '다음 호(4단위)는 무엇인가?'),
-      el('div', { class: 'drill-subject code' }, q.code),
+      el('div', { class: 'drill-prompt' }, `다음 ${unit}는 무엇인가?`),
+      el('div', { class: 'drill-subject code' }, isCh ? `제${q.code}류` : q.code),
     ]));
     if (!answered) {
       wrap.appendChild(el('div', { class: 'drill-answer' }, [
@@ -569,7 +601,7 @@ function renderHsQuestion() {
     } else {
       wrap.appendChild(el('div', { class: 'drill-reveal' }, [
         el('div', { class: 'drill-answer-text' }, q.title),
-        chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
+        context,
         el('div', { class: 'self-grade' }, [
           el('button', { class: 'btn wrong', onclick: () => { newHsQuestion(); render(); } }, '✕ 다음'),
           el('button', { class: 'btn right', onclick: () => { newHsQuestion(); render(); } }, '✓ 다음'),
@@ -578,16 +610,6 @@ function renderHsQuestion() {
     }
   }
   return wrap;
-}
-
-function renderHsResult(correctCode, answerText, chapter) {
-  const ok = hsDrill.correct;
-  return el('div', { class: 'drill-reveal' }, [
-    el('div', { class: 'drill-verdict ' + (ok ? 'ok' : 'no') }, ok ? '✓ 정답' : '✕ 오답'),
-    el('div', { class: 'drill-answer-text', html: `정답: <code>${esc(correctCode)}</code> — ${esc(answerText.split('—')[1] || '')}` }),
-    chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
-    el('button', { class: 'btn primary', onclick: () => { newHsQuestion(); render(); } }, '다음 문제'),
-  ]);
 }
 
 function renderHsTreeBrowser(tree) {
