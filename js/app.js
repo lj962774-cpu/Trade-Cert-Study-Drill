@@ -90,6 +90,7 @@ function render() {
   switch (nav.view) {
     case 'home': main.appendChild(renderHome()); break;
     case 'study': main.appendChild(renderStudy()); break;
+    case 'learn': main.appendChild(renderLearn()); break;
     case 'cards': main.appendChild(renderCards()); break;
     case 'hs': main.appendChild(renderHsDrill()); break;
     case 'stats': main.appendChild(renderStats()); break;
@@ -190,10 +191,12 @@ function renderHome() {
         el('div', { class: 'deck-sub' }, `${dk.cards.length}장 · 진도 ${prog}%`),
       ]),
       el('div', { class: 'deck-actions' }, [
+        el('button', { class: 'btn', disabled: dk.cards.length === 0,
+          onclick: () => startLearn(dk.id) }, '📖 학습'),
         el('button', {
           class: 'btn primary', disabled: dk.cards.length === 0,
           onclick: () => startStudy(dk.id),
-        }, due > 0 ? '학습' : '미리 학습'),
+        }, due > 0 ? `복습 ${due}` : '복습'),
         el('button', { class: 'btn ghost', onclick: () => go('cards', dk.id) }, '카드'),
       ]),
     ]);
@@ -287,7 +290,7 @@ function renderStudy() {
 
   const badges = el('div', { class: 'card-badges' }, [
     card.seed ? el('span', { class: 'badge seed', title: '확실도 높은 골격 시드' }, '골격') : null,
-    session.ahead ? el('span', { class: 'badge ahead' }, '미리 학습') : null,
+    session.ahead ? el('span', { class: 'badge ahead' }, '미리 복습') : null,
     ...card.tags.map((t) => el('span', { class: 'badge tag' }, t)),
   ]);
 
@@ -327,7 +330,7 @@ function renderStudy() {
   return frag;
 }
 
-// 학습 세션 키보드 단축키
+// 복습(SRS) 세션 키보드 단축키
 document.addEventListener('keydown', (e) => {
   if (nav.view !== 'study' || !session || !session.card) return;
   if (e.target.matches('input, textarea')) return;
@@ -336,6 +339,133 @@ document.addEventListener('keydown', (e) => {
   } else if (session.revealed) {
     if (e.key === '1') { e.preventDefault(); gradeCurrent(false); }
     else if (e.key === '2' || e.code === 'Space') { e.preventDefault(); gradeCurrent(true); }
+  }
+});
+
+// ── 학습(읽기) 모드 — 채점 없이 앞·뒤를 함께 읽으며 익힌다 ──
+let learn = null; // { deckId, order:[cards], idx, tag, shuffle, hide }
+
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startLearn(deckId) {
+  const deck = store.getDeck(deckId);
+  if (!deck) return;
+  learn = { deckId, idx: 0, tag: null, shuffle: false, hide: false };
+  buildLearnOrder();
+  nav.view = 'learn';
+  render();
+  window.scrollTo(0, 0);
+}
+
+function buildLearnOrder() {
+  const deck = store.getDeck(learn.deckId);
+  let cards = deck.cards.slice();
+  if (learn.tag) cards = cards.filter((c) => c.tags.includes(learn.tag));
+  learn.order = learn.shuffle ? shuffled(cards) : cards;
+  if (learn.idx >= learn.order.length) learn.idx = 0;
+  if (learn.idx < 0) learn.idx = 0;
+}
+
+function learnStep(delta) {
+  if (!learn.order.length) return;
+  learn.idx = (learn.idx + delta + learn.order.length) % learn.order.length;
+  render();
+}
+
+function renderLearn() {
+  const deck = store.getDeck(learn.deckId);
+  const frag = document.createDocumentFragment();
+  if (!deck) { frag.appendChild(el('p', { class: 'hint' }, '덱을 찾을 수 없습니다.')); return frag; }
+
+  frag.appendChild(el('div', { class: 'study-head' }, [
+    el('button', { class: 'btn ghost', onclick: () => go('home') }, '← 대시보드'),
+    el('span', { class: 'study-deck' }, `📖 ${deck.name} · 학습`),
+  ]));
+
+  // 태그 필터 칩
+  const tags = Array.from(new Set(deck.cards.flatMap((c) => c.tags))).sort();
+  if (tags.length) {
+    frag.appendChild(el('div', { class: 'learn-tags' }, [
+      el('button', { class: 'chip' + (learn.tag == null ? ' active' : ''),
+        onclick: () => { learn.tag = null; learn.idx = 0; buildLearnOrder(); render(); } }, '전체'),
+      ...tags.map((t) => el('button', {
+        class: 'chip' + (learn.tag === t ? ' active' : ''),
+        onclick: () => { learn.tag = t; learn.idx = 0; buildLearnOrder(); render(); },
+      }, t)),
+    ]));
+  }
+
+  // 옵션 토글
+  frag.appendChild(el('div', { class: 'learn-opts' }, [
+    el('button', { class: 'btn tiny' + (learn.shuffle ? ' active' : ''),
+      onclick: () => { learn.shuffle = !learn.shuffle; learn.idx = 0; buildLearnOrder(); render(); } },
+      learn.shuffle ? '🔀 무작위' : '↕ 순서대로'),
+    el('button', { class: 'btn tiny' + (learn.hide ? ' active' : ''),
+      onclick: () => { learn.hide = !learn.hide; render(); } },
+      learn.hide ? '🙈 정답 가림' : '👁 정답 표시'),
+  ]));
+
+  const cards = learn.order;
+  if (!cards.length) {
+    frag.appendChild(el('div', { class: 'done-card' }, [
+      el('div', { class: 'done-emoji' }, '📭'),
+      el('p', { class: 'hint' }, learn.tag ? `'${learn.tag}' 태그 카드가 없습니다.` : '이 덱에 카드가 없습니다.'),
+    ]));
+    return frag;
+  }
+
+  const card = cards[learn.idx];
+  const showBack = !learn.hide || learn._peek;
+
+  frag.appendChild(el('div', { class: 'learn-progress' }, [
+    el('span', {}, `${learn.idx + 1} / ${cards.length}`),
+    el('span', {}, deck.tag || ''),
+  ]));
+
+  const badges = el('div', { class: 'card-badges' }, [
+    card.seed ? el('span', { class: 'badge seed', title: '확실도 높은 골격 시드' }, '골격') : null,
+    ...card.tags.map((t) => el('span', { class: 'badge tag' }, t)),
+  ]);
+
+  frag.appendChild(el('div', { class: 'card-face learn-face' }, [
+    badges,
+    el('div', { class: 'card-front', html: fmt(card.front) }),
+    showBack
+      ? el('div', { class: 'card-back' }, [
+          el('hr'),
+          el('div', { html: fmt(card.back) }),
+          card.note ? el('div', { class: 'card-note', html: fmt(card.note) }) : null,
+        ])
+      : el('button', { class: 'btn ghost reveal-btn', onclick: () => { learn._peek = true; render(); } }, '정답 보기 (Space)'),
+  ]));
+
+  frag.appendChild(el('div', { class: 'learn-nav' }, [
+    el('button', { class: 'btn', onclick: () => { learn._peek = false; learnStep(-1); } }, '← 이전'),
+    el('button', { class: 'btn primary', onclick: () => { learn._peek = false; learnStep(1); } }, '다음 →'),
+  ]));
+
+  frag.appendChild(el('p', { class: 'hint learn-hint' }, '← → 이동 · Space 정답 · 채점은 없습니다. 복습(SRS)은 대시보드의 "복습".'));
+
+  return frag;
+}
+
+// 학습(읽기) 모드 키보드 단축키
+document.addEventListener('keydown', (e) => {
+  if (nav.view !== 'learn' || !learn || !learn.order || !learn.order.length) return;
+  if (e.target.matches('input, textarea, select')) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); learn._peek = false; learnStep(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); learn._peek = false; learnStep(-1); }
+  else if (e.code === 'Space') {
+    e.preventDefault();
+    if (learn.hide && !learn._peek) { learn._peek = true; render(); }
+    else { learn._peek = false; learnStep(1); }
   }
 });
 
@@ -484,7 +614,8 @@ function deleteDeckPrompt(deckId) {
 }
 
 // ── HS 트리 드릴 (차별화 §4.7 우선순위 1) ──
-let hsDrill = null; // { dir, q, answered, correct }
+// level: 'chapter'(류 2단위) | 'heading'(호 4단위), dir: 'forward'|'reverse'
+let hsDrill = null; // { level, dir, q, answered, correct }
 function renderHsDrill() {
   const frag = document.createDocumentFragment();
   const tree = state.hsTree;
@@ -492,28 +623,38 @@ function renderHsDrill() {
   frag.appendChild(el('h2', {}, '🌳 HS 품목분류 트리 드릴'));
   frag.appendChild(el('div', { class: 'notice' }, [
     el('strong', {}, '가드레일: '),
-    '부(21) 구조는 국제표준 골격입니다. 호(4단위) 이하 세부는 앱이 생성하지 않으며, ',
+    '부(21)·류(2단위) 구조는 WCO 국제표준 골격입니다. 호(4단위) 이하 세부는 앱이 생성하지 않으며, ',
     el('strong', {}, '현행 공식 기본서로 사용자가 입력'),
-    '한 항목만 드릴에 출제됩니다.',
+    '한 항목만 호 드릴에 출제됩니다.',
   ]));
 
-  // 드릴 위젯
-  const headings = tree.headings;
+  const hasChapters = tree.chapters.length > 0;
+  const hasHeadings = tree.headings.length > 0;
   const drillBox = el('div', { class: 'drill-box' });
-  if (headings.length === 0) {
-    drillBox.appendChild(el('p', { class: 'hint' }, '드릴할 호(4단위) 항목이 없습니다. 아래에서 추가하세요.'));
+  if (!hasChapters && !hasHeadings) {
+    drillBox.appendChild(el('p', { class: 'hint' }, '드릴할 항목이 없습니다.'));
   } else {
     if (!hsDrill) newHsQuestion();
     drillBox.appendChild(renderHsQuestion());
   }
+
+  const level = hsDrill ? hsDrill.level : 'chapter';
+  const dir = hsDrill ? hsDrill.dir : 'forward';
+  const modeBar = (hasChapters || hasHeadings) ? el('div', { class: 'drill-mode' }, [
+    el('span', { class: 'mode-label' }, '범위'),
+    el('button', { class: 'btn tiny' + (level === 'chapter' ? ' active' : ''), disabled: !hasChapters,
+      onclick: () => { newHsQuestion('chapter'); render(); } }, `류 ${tree.chapters.length}`),
+    el('button', { class: 'btn tiny' + (level === 'heading' ? ' active' : ''), disabled: !hasHeadings,
+      onclick: () => { newHsQuestion('heading'); render(); } }, `호 ${tree.headings.length}`),
+    el('span', { class: 'mode-label' }, '방향'),
+    el('button', { class: 'btn tiny' + (dir === 'forward' ? ' active' : ''),
+      onclick: () => { newHsQuestion(level, 'forward'); render(); } }, '이름→코드'),
+    el('button', { class: 'btn tiny' + (dir === 'reverse' ? ' active' : ''),
+      onclick: () => { newHsQuestion(level, 'reverse'); render(); } }, '코드→이름'),
+  ]) : null;
+
   frag.appendChild(el('section', {}, [
-    el('div', { class: 'section-head' }, [
-      el('h3', {}, '드릴'),
-      headings.length ? el('div', { class: 'drill-mode' }, [
-        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'forward' ? ' active' : ''), onclick: () => { newHsQuestion('forward'); render(); } }, '정방향(이름→호)'),
-        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'reverse' ? ' active' : ''), onclick: () => { newHsQuestion('reverse'); render(); } }, '역방향(호→이름)'),
-      ]) : null,
-    ]),
+    el('div', { class: 'section-head' }, [el('h3', {}, '드릴'), modeBar]),
     drillBox,
   ]));
 
@@ -526,41 +667,62 @@ function renderHsDrill() {
   return frag;
 }
 
-function newHsQuestion(dir) {
-  const headings = state.hsTree.headings;
-  if (!headings.length) { hsDrill = null; return; }
-  const useDir = dir || (hsDrill ? hsDrill.dir : (Math.random() < 0.5 ? 'forward' : 'reverse'));
-  const q = headings[Math.floor(Math.random() * headings.length)];
-  hsDrill = { dir: useDir, q, answered: false, correct: null };
+function newHsQuestion(level, dir) {
+  const tree = state.hsTree;
+  let useLevel = level || (hsDrill ? hsDrill.level : 'chapter');
+  let pool = useLevel === 'chapter' ? tree.chapters : tree.headings;
+  if (!pool.length) {
+    // 비어 있으면 다른 범위로 대체
+    useLevel = useLevel === 'chapter' ? 'heading' : 'chapter';
+    pool = useLevel === 'chapter' ? tree.chapters : tree.headings;
+    if (!pool.length) { hsDrill = null; return; }
+  }
+  const useDir = dir || (hsDrill ? hsDrill.dir : 'forward');
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  hsDrill = { level: useLevel, dir: useDir, q, answered: false, correct: null };
+}
+
+// 현재 문제의 상위 맥락(류→부, 호→류) 노드
+function hsContext(level, q) {
+  if (level === 'chapter') {
+    const sec = state.hsTree.sections.find((s) => s.no === q.section);
+    return sec ? el('div', { class: 'drill-context' }, `제${sec.no}부 · ${sec.title}`) : null;
+  }
+  const ch = state.hsTree.chapters.find((c) => c.code === q.chapter);
+  return ch ? el('div', { class: 'drill-context' }, `제${ch.code}류 · ${ch.title}`) : null;
 }
 
 function renderHsQuestion() {
-  const { dir, q, answered } = hsDrill;
-  const chapter = state.hsTree.chapters.find((c) => c.code === q.chapter);
+  const { level, dir, q, answered } = hsDrill;
+  const isCh = level === 'chapter';
+  const unit = isCh ? '류(2단위)' : '호(4단위)';
+  const codeLen = isCh ? 2 : 4;
+  const context = hsContext(level, q);
   const wrap = el('div', {});
+
   if (dir === 'forward') {
     wrap.appendChild(el('div', { class: 'drill-q' }, [
-      el('div', { class: 'drill-prompt' }, '다음 물품은 몇 호(4단위)인가?'),
+      el('div', { class: 'drill-prompt' }, `다음은 몇 ${unit}인가?`),
       el('div', { class: 'drill-subject' }, q.title),
     ]));
     if (!answered) {
-      const input = el('input', { class: 'inp code-input', inputmode: 'numeric', maxlength: '4', placeholder: '____', 'aria-label': '호 4자리' });
-      const submit = () => {
-        hsDrill.answered = true;
-        hsDrill.correct = input.value.trim() === q.code;
-        render();
-      };
+      const input = el('input', { class: 'inp code-input', inputmode: 'numeric', maxlength: String(codeLen), placeholder: isCh ? '__' : '____', 'aria-label': `${unit} 코드` });
+      const submit = () => { hsDrill.answered = true; hsDrill.correct = input.value.trim() === q.code; render(); };
       wrap.appendChild(el('form', { class: 'drill-answer', onsubmit: (e) => { e.preventDefault(); submit(); } }, [
-        input,
-        el('button', { class: 'btn primary', type: 'submit' }, '확인'),
+        input, el('button', { class: 'btn primary', type: 'submit' }, '확인'),
       ]));
     } else {
-      wrap.appendChild(renderHsResult(q.code, `${q.code} — ${q.title}`, chapter));
+      wrap.appendChild(el('div', { class: 'drill-reveal' }, [
+        el('div', { class: 'drill-verdict ' + (hsDrill.correct ? 'ok' : 'no') }, hsDrill.correct ? '✓ 정답' : '✕ 오답'),
+        el('div', { class: 'drill-answer-text', html: `정답: <code>${esc(isCh ? '제' + q.code + '류' : q.code)}</code> — ${esc(q.title)}` }),
+        context,
+        el('button', { class: 'btn primary', onclick: () => { newHsQuestion(); render(); } }, '다음 문제'),
+      ]));
     }
   } else {
     wrap.appendChild(el('div', { class: 'drill-q' }, [
-      el('div', { class: 'drill-prompt' }, '다음 호(4단위)는 무엇인가?'),
-      el('div', { class: 'drill-subject code' }, q.code),
+      el('div', { class: 'drill-prompt' }, `다음 ${unit}는 무엇인가?`),
+      el('div', { class: 'drill-subject code' }, isCh ? `제${q.code}류` : q.code),
     ]));
     if (!answered) {
       wrap.appendChild(el('div', { class: 'drill-answer' }, [
@@ -569,7 +731,7 @@ function renderHsQuestion() {
     } else {
       wrap.appendChild(el('div', { class: 'drill-reveal' }, [
         el('div', { class: 'drill-answer-text' }, q.title),
-        chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
+        context,
         el('div', { class: 'self-grade' }, [
           el('button', { class: 'btn wrong', onclick: () => { newHsQuestion(); render(); } }, '✕ 다음'),
           el('button', { class: 'btn right', onclick: () => { newHsQuestion(); render(); } }, '✓ 다음'),
@@ -578,16 +740,6 @@ function renderHsQuestion() {
     }
   }
   return wrap;
-}
-
-function renderHsResult(correctCode, answerText, chapter) {
-  const ok = hsDrill.correct;
-  return el('div', { class: 'drill-reveal' }, [
-    el('div', { class: 'drill-verdict ' + (ok ? 'ok' : 'no') }, ok ? '✓ 정답' : '✕ 오답'),
-    el('div', { class: 'drill-answer-text', html: `정답: <code>${esc(correctCode)}</code> — ${esc(answerText.split('—')[1] || '')}` }),
-    chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
-    el('button', { class: 'btn primary', onclick: () => { newHsQuestion(); render(); } }, '다음 문제'),
-  ]);
 }
 
 function renderHsTreeBrowser(tree) {

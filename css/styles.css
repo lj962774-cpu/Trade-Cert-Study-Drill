@@ -221,6 +221,26 @@ section { margin-bottom: 22px; }
 .done-card { text-align: center; padding: 40px 16px; }
 .done-emoji { font-size: 3rem; }
 
+/* ── Learn (read) mode ── */
+.learn-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+  font: inherit; font-size: 0.8rem; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  min-height: 34px;
+}
+.chip.active { background: var(--primary); color: #fff; border-color: transparent; font-weight: 600; }
+.chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.learn-opts { display: flex; gap: 8px; margin-bottom: 12px; }
+.learn-progress {
+  display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);
+  margin-bottom: 10px; font-variant-numeric: tabular-nums;
+}
+.learn-face { min-height: 160px; }
+.reveal-btn { margin-top: 14px; }
+.learn-nav { display: flex; gap: 10px; margin-top: 16px; }
+.learn-nav .btn { flex: 1; min-height: 52px; font-size: 1.02rem; }
+.learn-hint { text-align: center; margin-top: 12px; }
+
 /* ── Cards manager ── */
 .deck-select, .inp, .search {
   font: inherit; padding: 10px 12px; border: 1px solid var(--border);
@@ -259,7 +279,9 @@ section { margin-bottom: 22px; }
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 18px; box-shadow: var(--shadow);
 }
-.drill-mode { display: flex; gap: 6px; }
+.drill-mode { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.mode-label { font-size: 0.72rem; color: var(--text-muted); margin-left: 4px; }
+.mode-label:first-child { margin-left: 0; }
 .drill-prompt { font-size: 0.85rem; color: var(--text-muted); }
 .drill-subject { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
 .drill-subject.code { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }

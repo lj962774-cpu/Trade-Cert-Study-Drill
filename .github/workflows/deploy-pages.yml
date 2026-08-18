@@ -4,12 +4,13 @@ name: Deploy to GitHub Pages
 # 저장소 루트를 그대로 서빙한다(index.html + css/ + js/ + sw.js + manifest).
 
 # Pages must be enabled once (Settings → Pages → Source: "GitHub Actions").
-# Deploys on push to main or the app's feature branch, and on manual dispatch.
+# The github-pages environment only permits deployments from the default
+# branch, so deploy on push to main (or manual dispatch) — feature branches
+# would just fail the environment gate.
 on:
   push:
     branches:
       - main
-      - claude/trade-cert-srs-app-cxivby
   workflow_dispatch:
 
 permissions:
