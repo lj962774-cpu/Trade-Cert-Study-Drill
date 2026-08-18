@@ -19,6 +19,18 @@ python3 -m http.server 8000
 모바일에서는 브라우저의 **홈 화면에 추가**로 설치하면 오프라인 앱처럼 동작합니다
 (Service Worker + IndexedDB). GitHub Pages 등 정적 호스팅에 그대로 배포할 수 있습니다.
 
+### GitHub Pages 배포
+
+저장소에 배포 워크플로(`.github/workflows/deploy-pages.yml`)가 포함되어 있습니다.
+**최초 1회만** 수동으로 Pages 를 켜야 합니다(액션 토큰은 Pages 를 자동 생성할 수 없음):
+
+1. 저장소 **Settings → Pages → Build and deployment → Source** 를 **GitHub Actions** 로 설정
+2. `main` 브랜치에 병합되면(또는 Actions 탭에서 워크플로를 수동 실행하면) 자동 배포
+3. 배포 주소: `https://lj962774-cpu.github.io/Trade-Cert-Study-Drill/`
+
+> 단일 파일 버전이 필요하면 `node scripts/build-standalone.js` 로 `dist/index.html`
+> (모든 CSS·JS 인라인)을 생성할 수 있습니다.
+
 ## 주요 기능
 
 | 영역 | 내용 |
