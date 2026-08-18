@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+# 정적 PWA(빌드 불필요)를 GitHub Pages 로 배포한다.
+# 저장소 루트를 그대로 서빙한다(index.html + css/ + js/ + sw.js + manifest).
+
+# Pages must be enabled once (Settings → Pages → Source: "GitHub Actions").
+# Deploys on push to main or the app's feature branch, and on manual dispatch.
+on:
+  push:
+    branches:
+      - main
+      - claude/trade-cert-srs-app-cxivby
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 배포 1개로 제한.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          # Pages 가 아직 비활성 상태면 워크플로가 자동으로 활성화한다.
+          enablement: true
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

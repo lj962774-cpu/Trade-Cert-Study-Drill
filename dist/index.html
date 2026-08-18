@@ -1,0 +1,1964 @@
+<title>무역자격 드릴</title>
+<style>
+/* styles.css — 모바일 우선, 접근성, 라이트/다크 대응 */
+
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --text: #1a2230;
+  --text-muted: #5c6a7e;
+  --border: #d9dfe8;
+  --primary: #2563eb;
+  --primary-ink: #ffffff;
+  --right: #16a34a;
+  --wrong: #dc2626;
+  --seed: #7c3aed;
+  --accent: #0891b2;
+  --shadow: 0 1px 3px rgba(20, 30, 50, 0.08), 0 1px 2px rgba(20, 30, 50, 0.06);
+  --radius: 12px;
+  --tap: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141b;
+    --surface: #182028;
+    --surface-2: #1f2937;
+    --text: #e7edf5;
+    --text-muted: #93a1b5;
+    --border: #2b3644;
+    --primary: #3b82f6;
+    --right: #22c55e;
+    --wrong: #ef4444;
+    --seed: #a78bfa;
+    --accent: #22d3ee;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo',
+    'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+code, .code, .code-input {
+  font-family: 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+code {
+  background: var(--surface-2);
+  padding: 0.08em 0.4em;
+  border-radius: 6px;
+  font-size: 0.92em;
+  color: var(--accent);
+}
+
+h2 { font-size: 1.25rem; margin: 0.2em 0 0.6em; }
+h3 { font-size: 1.05rem; margin: 1.2em 0 0.5em; }
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.brand {
+  display: block; width: 100%;
+  font-weight: 700; font-size: 1.05rem;
+  padding: 12px 16px 8px; border: none; background: none;
+  color: var(--text); text-align: left; cursor: pointer;
+}
+.nav-tabs {
+  display: flex; gap: 2px; overflow-x: auto;
+  padding: 0 8px 8px; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  flex: 0 0 auto; border: none; background: none;
+  color: var(--text-muted); font-size: 0.9rem;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  white-space: nowrap; min-height: var(--tap);
+}
+.nav-tab.active { background: var(--surface-2); color: var(--primary); font-weight: 600; }
+.nav-tab:focus-visible, .brand:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ── Layout ── */
+.container { max-width: 860px; margin: 0 auto; padding: 16px; }
+section { margin-bottom: 22px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: var(--tap); padding: 10px 16px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); color: var(--text);
+  font-size: 0.95rem; font-weight: 500; cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--primary); color: var(--primary-ink); border-color: transparent; }
+.btn.ghost { background: transparent; }
+.btn.small { min-height: 38px; padding: 6px 12px; font-size: 0.88rem; }
+.btn.tiny { min-height: 32px; padding: 4px 10px; font-size: 0.82rem; border-radius: 8px; }
+.btn.wide { width: 100%; }
+.btn.right { background: var(--right); color: #fff; border-color: transparent; flex: 1; }
+.btn.wrong { background: var(--wrong); color: #fff; border-color: transparent; flex: 1; }
+.btn.danger { color: var(--wrong); border-color: var(--wrong); }
+.btn.active { background: var(--primary); color: #fff; border-color: transparent; }
+.link {
+  background: none; border: none; color: var(--primary);
+  cursor: pointer; padding: 0; font: inherit; text-decoration: underline;
+}
+
+/* ── Exam / D-day ── */
+.exam-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 560px) { .exam-grid { grid-template-columns: repeat(3, 1fr); } }
+.exam-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow);
+}
+.exam-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.exam-name { font-weight: 600; font-size: 0.95rem; }
+.exam-meta { color: var(--text-muted); font-size: 0.82rem; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.dday { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; color: var(--primary); }
+.dday.today { color: var(--wrong); }
+.dday.past { color: var(--text-muted); }
+.dday.none { font-size: 0.78rem; font-weight: 500; color: var(--text-muted); }
+
+/* ── Today summary ── */
+.today-summary, .stats-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.stats-tiles { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 560px) { .stats-tiles { grid-template-columns: repeat(4, 1fr); } }
+.stat-tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow);
+}
+.stat-num { font-size: 1.9rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--primary); }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Deck list ── */
+.deck-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.deck-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; box-shadow: var(--shadow);
+  display: flex; gap: 12px; align-items: center; justify-content: space-between;
+}
+.deck-main { flex: 1; min-width: 0; }
+.deck-title-row { display: flex; align-items: center; gap: 8px; }
+.deck-name { font-weight: 600; }
+.deck-tag { font-size: 0.78rem; color: var(--text-muted); min-height: 1em; }
+.deck-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.deck-actions { display: flex; flex-direction: column; gap: 6px; }
+.progress { height: 6px; background: var(--surface-2); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+.progress-bar { height: 100%; background: var(--primary); border-radius: 4px; transition: width 0.3s ease; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; font-size: 0.72rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.badge.due { background: var(--primary); color: #fff; }
+.badge.muted { background: var(--surface-2); color: var(--text-muted); }
+.badge.seed { background: var(--seed); color: #fff; }
+.badge.ahead { background: var(--accent); color: #fff; }
+.badge.tag { background: var(--surface-2); color: var(--text-muted); }
+.mini-badge {
+  display: inline-block; font-size: 0.7rem; padding: 1px 7px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.mini-badge.seed { background: var(--seed); color: #fff; }
+.mini-badge.tag { background: transparent; border: 1px solid var(--border); }
+
+/* ── Study session ── */
+.study-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.study-deck { font-weight: 600; }
+.study-progress {
+  display: flex; justify-content: space-between; font-size: 0.85rem;
+  color: var(--text-muted); margin-bottom: 14px; font-variant-numeric: tabular-nums;
+}
+.box-shelf { display: flex; gap: 6px; margin-bottom: 16px; }
+.box-cell {
+  flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.box-cell.filled { background: var(--surface-2); }
+.box-cell.current { background: var(--primary); color: #fff; border-color: transparent; font-weight: 700; transform: scale(1.06); }
+.box-num { font-size: 0.9rem; }
+
+.card-face {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px; box-shadow: var(--shadow); min-height: 180px;
+}
+.card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.card-front { font-size: 1.25rem; font-weight: 600; line-height: 1.5; }
+.card-back { margin-top: 6px; font-size: 1.08rem; }
+.card-back hr { border: none; border-top: 1px dashed var(--border); margin: 14px 0; }
+.card-note { margin-top: 12px; font-size: 0.9rem; color: var(--text-muted); background: var(--surface-2); padding: 8px 12px; border-radius: 8px; }
+
+.grade-controls { display: flex; gap: 10px; margin-top: 16px; }
+.grade-controls .btn { min-height: 56px; font-size: 1.05rem; }
+.gk { font-size: 1.2rem; }
+.key-hint {
+  font-size: 0.68rem; opacity: 0.7; border: 1px solid currentColor;
+  border-radius: 4px; padding: 0 5px; margin-left: 6px;
+}
+.done-card { text-align: center; padding: 40px 16px; }
+.done-emoji { font-size: 3rem; }
+
+/* ── Cards manager ── */
+.deck-select, .inp, .search {
+  font: inherit; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface); color: var(--text); width: 100%;
+  min-height: var(--tap);
+}
+.deck-select { width: auto; max-width: 60%; }
+.deck-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.card-form {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.form-title { font-weight: 600; font-size: 0.95rem; }
+.card-form textarea { resize: vertical; }
+.search { margin-bottom: 12px; }
+.card-count { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; }
+.card-rows { display: flex; flex-direction: column; gap: 8px; }
+.card-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; display: flex; gap: 10px; justify-content: space-between; align-items: flex-start;
+}
+.card-row-main { min-width: 0; flex: 1; }
+.card-row-front { font-weight: 600; }
+.card-row-back { color: var(--text-muted); font-size: 0.92rem; margin-top: 2px; }
+.card-row-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.card-row-actions { display: flex; flex-direction: column; gap: 4px; }
+
+/* ── HS drill ── */
+.notice {
+  background: color-mix(in srgb, var(--seed) 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--seed) 30%, var(--border));
+  border-radius: 10px; padding: 10px 14px; font-size: 0.86rem; margin-bottom: 14px;
+}
+.notice.ok { background: color-mix(in srgb, var(--right) 12%, var(--surface)); border-color: color-mix(in srgb, var(--right) 30%, var(--border)); }
+.drill-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px; box-shadow: var(--shadow);
+}
+.drill-mode { display: flex; gap: 6px; }
+.drill-prompt { font-size: 0.85rem; color: var(--text-muted); }
+.drill-subject { font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
+.drill-subject.code { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+.drill-answer { display: flex; gap: 8px; margin-top: 14px; }
+.code-input { max-width: 140px; font-size: 1.3rem; text-align: center; letter-spacing: 0.2em; }
+.drill-reveal { margin-top: 14px; }
+.drill-answer-text { font-size: 1.15rem; font-weight: 600; }
+.drill-context { color: var(--text-muted); font-size: 0.9rem; margin: 6px 0 12px; }
+.drill-verdict { font-weight: 700; margin-bottom: 6px; }
+.drill-verdict.ok { color: var(--right); }
+.drill-verdict.no { color: var(--wrong); }
+.self-grade { display: flex; gap: 10px; margin-top: 12px; }
+
+.tree-browser { margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 14px; }
+.tree-browser summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
+.tree-body { padding: 8px 0 12px; }
+.tree-section { margin-bottom: 12px; }
+.tree-sec-head { display: flex; gap: 8px; align-items: baseline; font-weight: 600; font-size: 0.9rem; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.tree-sec-no { color: var(--primary); }
+.tree-range { margin-left: auto; color: var(--text-muted); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.tree-chapter { padding: 4px 0 4px 12px; font-size: 0.9rem; }
+.tree-heading { padding: 3px 0 3px 28px; font-size: 0.86rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tree-heading .code, .tree-chapter .code { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; }
+.hs-add-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.hs-add-form .inp { flex: 1; min-width: 120px; width: auto; }
+.hs-add-form .code-input { flex: 0 0 auto; letter-spacing: 0.1em; }
+
+/* ── Stats ── */
+.dist-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.dist-head { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+.dist-head .muted { font-weight: 400; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.dist-bars { display: flex; gap: 8px; align-items: flex-end; height: 90px; }
+.dist-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.dist-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.dist-bar { width: 100%; min-height: 3px; border-radius: 4px 4px 0 0; background: var(--primary); }
+.dist-bar.b1 { background: #ef4444; } .dist-bar.b2 { background: #f59e0b; }
+.dist-bar.b3 { background: #eab308; } .dist-bar.b4 { background: #84cc16; } .dist-bar.b5 { background: #16a34a; }
+.dist-x { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.dist-n { font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-muted); }
+
+.heatmap { display: flex; gap: 6px; }
+.heat-day { flex: 1; text-align: center; }
+.heat-cell {
+  aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff;
+  background: var(--surface-2); color: var(--text-muted);
+}
+.heat-cell.l1 { background: color-mix(in srgb, var(--right) 30%, var(--surface-2)); color: var(--text); }
+.heat-cell.l2 { background: color-mix(in srgb, var(--right) 50%, var(--surface-2)); color: #fff; }
+.heat-cell.l3 { background: color-mix(in srgb, var(--right) 75%, var(--surface-2)); color: #fff; }
+.heat-cell.l4 { background: var(--right); color: #fff; }
+.heat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+
+/* ── Data / settings ── */
+.file-label { cursor: pointer; }
+.file-input { display: none; }
+.import-result { margin-top: 12px; }
+.settings-list, .interval-grid { display: flex; flex-direction: column; gap: 8px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setting-row input { min-height: var(--tap); padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+.interval-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+.interval-cell { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+.interval-cell .inp { text-align: center; }
+.guardrail-note { background: color-mix(in srgb, var(--seed) 8%, var(--surface)); border: 1px solid color-mix(in srgb, var(--seed) 25%, var(--border)); border-radius: var(--radius); padding: 4px 16px 16px; }
+
+.hint { font-size: 0.82rem; color: var(--text-muted); margin: 6px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+  .box-cell.current { transform: none; }
+}
+
+
+/* Explicit theme-stamp support (light = base :root; dark mirrored) */
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#182028; --surface-2:#1f2937; --text:#e7edf5;
+  --text-muted:#93a1b5; --border:#2b3644; --primary:#3b82f6; --right:#22c55e;
+  --wrong:#ef4444; --seed:#a78bfa; --accent:#22d3ee;
+  --shadow:0 1px 3px rgba(0,0,0,.4);}
+@media (prefers-color-scheme: dark){ :root[data-theme="light"]{
+  --bg:#f4f6f9; --surface:#ffffff; --surface-2:#eef1f6; --text:#1a2230;
+  --text-muted:#5c6a7e; --border:#d9dfe8; --primary:#2563eb; --right:#16a34a;
+  --wrong:#dc2626; --seed:#7c3aed; --accent:#0891b2;
+  --shadow:0 1px 3px rgba(20,30,50,.08),0 1px 2px rgba(20,30,50,.06);} }
+</style>
+<div id="app">
+  <noscript>이 앱은 JavaScript 가 필요합니다.</noscript>
+  <div class="container"><p class="hint">불러오는 중…</p></div>
+</div>
+<script>
+/* ===== js/seed.js ===== */
+// seed.js — 확실도 높은 "골격" 시드 콘텐츠만 하드코딩한다 (PRD §8 가드레일).
+// 금지: HS 세부 호/소호(6·10단위) 임의 생성, PSR 협정별 계산식 임의 단정,
+//       법령 조문·수치 임의 서술. 세부/법령/계산은 사용자가 공식 기본서로 입력.
+// 모든 시드 카드는 seed:true 로 표기되어 UI 에서 "골격" 배지로 노출된다.
+
+// 카드 골격 헬퍼: 나머지 필드(box/due 등)는 store 에서 정규화한다.
+function C(front, back, tags) {
+  return { front, back, tags: tags || [], seed: true };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 시험(Exam) — 시험일은 사용자가 설정에서 변경한다(placeholder).
+// ─────────────────────────────────────────────────────────────
+const SEED_EXAMS = [
+  { id: 'origin', name: '원산지관리사', examDate: '' },
+  { id: 'trade-eng', name: '무역영어 1급', examDate: '' },
+  { id: 'toeic', name: 'TOEIC', examDate: '' },
+];
+
+// ─────────────────────────────────────────────────────────────
+// 덱(Deck) 정의 + 시드 카드
+// ─────────────────────────────────────────────────────────────
+const SEED_DECKS = {
+  hs: {
+    name: '품목분류(HS)',
+    tag: 'HS · 품목분류',
+    examId: 'origin',
+    cards: [
+      // ── HS 통칙 (GRI 1~6) : 국제표준 원칙 ──
+      C('통칙 제1호 — 분류의 법적 근거는 무엇인가?',
+        '부·류·절의 표제는 참조상 편의를 위한 것일 뿐 법적 효력이 없다. 품목분류는 **호(heading)의 용어**와 관련 **부·류의 주(note)**에 따라 결정한다.',
+        ['통칙', 'GRI1']),
+      C('통칙 제2호(가) — 불완전·미완성품 및 미조립품의 분류 원칙은?',
+        '① 제시된 상태에서 **완전·완성품의 본질적 특성**을 지닌 불완전/미완성품은 완성품으로 분류한다. ② 조립되지 않은(분해된) 상태로 제시된 물품도 완성품으로 분류한다.',
+        ['통칙', 'GRI2']),
+      C('통칙 제2호(나) — 재료·물질 혼합/결합 시 원칙은?',
+        '어떤 재료·물질에 대한 호의 언급은 그 재료·물질과 **다른 재료·물질과의 혼합·결합물**까지 포함한다. 둘 이상의 호에 해당하게 되면 **통칙 제3호**로 분류한다.',
+        ['통칙', 'GRI2']),
+      C('통칙 제3호(가) — 둘 이상의 호에 분류될 때 1순위 원칙은?',
+        '**가장 구체적으로 표현된 호(최협의)**가 일반적으로 표현된 호에 우선한다.',
+        ['통칙', 'GRI3']),
+      C('통칙 제3호(나) — (가)로 분류 불가한 혼합물·복합물·소매세트는?',
+        '물품에 **본질적 특성(essential character)**을 부여하는 재료·구성요소에 따라 분류한다.',
+        ['통칙', 'GRI3']),
+      C('통칙 제3호(다) — (가)·(나)로도 결정 못할 때는?',
+        '동일하게 고려되는 호 중 **번호가 가장 큰 호(최종호)**로 분류한다.',
+        ['통칙', 'GRI3']),
+      C('통칙 제4호 — 어느 호에도 분류할 수 없는 물품은?',
+        '**가장 유사한 물품**이 해당되는 호로 분류한다.',
+        ['통칙', 'GRI4']),
+      C('통칙 제5호(가) — 특정 물품 전용 케이스·상자의 분류는?',
+        '악기 케이스, 총 케이스처럼 특정 물품 전용으로 제작되어 함께 제시되고 통상 함께 판매되는 용기는 **그 물품과 함께 분류**한다(용기가 본질적 특성을 부여하는 경우는 제외).',
+        ['통칙', 'GRI5']),
+      C('통칙 제5호(나) — 통상적 포장용기·포장재료의 분류는?',
+        '물품과 함께 제시되는 통상적 포장용기·포장재료는 **그 물품과 함께 분류**한다(반복 사용에 적합한 용기는 제외).',
+        ['통칙', 'GRI5']),
+      C('통칙 제6호 — 소호(subheading) 분류의 원칙은?',
+        '소호 분류는 **소호의 용어와 관련 소호주**에 따르며, **동일 수준의 소호끼리만** 비교한다. 관련 부·류의 주도 준용한다.',
+        ['통칙', 'GRI6']),
+
+      // ── HS 구조 ──
+      C('HS 코드는 국제적으로 몇 자리까지 공통인가?',
+        '**6자리**까지 국제 공통(HS 국제협약). 앞 2자리=류(chapter), 4자리=호(heading), 6자리=소호(subheading).',
+        ['구조']),
+      C('우리나라 HSK(관세·통계통합품목분류표)는 몇 자리인가?',
+        '**10자리**. 국제 공통 6자리 + 국내 세분 4자리.',
+        ['구조']),
+      C('HS 의 부(Section)와 류(Chapter)는 각각 몇 개인가?',
+        '부(Section) **21개**, 류(Chapter)는 **01~97류**(제77류는 장래 사용을 위해 유보).',
+        ['구조']),
+      C('2·4·6자리 단위의 명칭을 각각 말하라.',
+        '2자리=**류(Chapter)**, 4자리=**호(Heading)**, 6자리=**소호(Subheading)**.',
+        ['구조']),
+    ],
+  },
+
+  origin: {
+    name: '원산지결정기준',
+    tag: '원산지 · PSR',
+    examId: 'origin',
+    cards: [
+      C('완전생산기준(WO) 이란?',
+        '**Wholly Obtained** — 한 국가(역내)에서 완전히 생산·획득·채취된 물품에 원산지를 부여하는 기준(예: 재배 농산물, 채굴 광물).',
+        ['유형', 'WO']),
+      C('세번변경기준(CTC) 의 3가지 유형은?',
+        '**CC**(2단위·류 변경), **CTH**(4단위·호 변경), **CTSH**(6단위·소호 변경). 비원산지 재료가 해당 단위의 세번변경을 거치면 원산지 인정.',
+        ['유형', 'CTC']),
+      C('CC / CTH / CTSH 를 세분 단위로 구분하라.',
+        '`CC`=Change of Chapter(2단위), `CTH`=Change of Tariff Heading(4단위), `CTSH`=Change of Tariff Sub-Heading(6단위).',
+        ['유형', 'CTC']),
+      C('부가가치기준(RVC) 이란?',
+        '**Regional Value Content** — 역내에서 발생한 부가가치(역내부가가치율)가 협정이 정한 기준 이상이면 원산지 인정. *구체 계산식·기준율은 협정별로 다르므로 공식 기본서 참조.*',
+        ['유형', 'RVC']),
+      C('특정공정기준(SP) 이란?',
+        '**Specific Process** — 협정이 지정한 특정 가공·제조 공정을 역내에서 수행하면 원산지를 인정하는 기준(예: 화학반응, 직물의 재단·봉제 등).',
+        ['유형', 'SP']),
+      C('불인정공정(단순공정) 이란?',
+        '단순 포장·라벨링·혼합·희석·건조·냉동 등 **실질적 변형으로 보지 않는 최소한의 공정**만으로는 원산지를 부여하지 않는다는 원칙.',
+        ['유형', '불인정공정']),
+      C('누적기준(Cumulation) 이란?',
+        '협정 상대국에서 발생한 재료·공정을 **자국의 원산지 재료·공정으로 간주**하여 역내 부가가치·세번변경 판단에 합산하는 제도.',
+        ['유형', '누적']),
+      C('최소허용기준(De Minimis / 미소기준) 이란?',
+        '세번변경기준을 충족하지 못한 비원산지 재료라도 그 비중이 **일정 기준 이하**이면 세번변경 요건을 충족한 것으로 간주. *구체 허용 비율은 협정별로 다르므로 공식 기본서 참조.*',
+        ['유형', '최소허용']),
+      C('직접운송원칙(Direct Transport) 이란?',
+        '특혜관세를 받으려면 물품이 원산지국에서 수입국으로 **직접 운송**되어야 한다(경유 시 비가공·세관통제 등 요건 충족 필요).',
+        ['유형', '직접운송']),
+    ],
+  },
+
+  'trade-eng': {
+    name: '무역영어',
+    tag: '무역영어 · 약어',
+    examId: 'trade-eng',
+    cards: [
+      C('`L/C`', 'Letter of Credit — 신용장', ['약어']),
+      C('`B/L`', 'Bill of Lading — 선하증권', ['약어']),
+      C('`AWB`', 'Air Waybill — 항공화물운송장', ['약어']),
+      C('`CISG`', 'Contracts for the International Sale of Goods — 국제물품매매계약에 관한 유엔협약', ['약어']),
+      C('`D/P`', 'Documents against Payment — 지급인도조건', ['약어']),
+      C('`D/A`', 'Documents against Acceptance — 인수인도조건', ['약어']),
+      C('`T/T`', 'Telegraphic Transfer — 전신환송금', ['약어']),
+      C('`C/O`', 'Certificate of Origin — 원산지증명서', ['약어']),
+      C('`UCP 600`', 'Uniform Customs and Practice for Documentary Credits — 신용장통일규칙(제600호)', ['약어']),
+      C('`P/L`', 'Packing List — 포장명세서', ['약어']),
+      C('`C/I`', 'Commercial Invoice — 상업송장', ['약어']),
+      C('`L/G`', 'Letter of Guarantee — 수입화물선취보증서', ['약어']),
+      C('`D/O`', 'Delivery Order — 화물인도지시서', ['약어']),
+      C('`FCL` / `LCL`', 'Full Container Load / Less than Container Load — 만재/소량 컨테이너 화물', ['약어']),
+      C('`ETD` / `ETA`', 'Estimated Time of Departure / Arrival — 출항/입항 예정시각', ['약어']),
+      C('`Incoterms`', 'International Commercial Terms — 정형(무역)거래조건', ['약어']),
+    ],
+  },
+
+  incoterms: {
+    name: '인코텀즈 2020',
+    tag: '인코텀즈 · 2020',
+    examId: 'trade-eng',
+    cards: [
+      C('인코텀즈 2020 규칙은 총 몇 개이며 어떻게 분류되는가?',
+        '총 **11규칙**. ① 운송방식 불문(7): EXW·FCA·CPT·CIP·DAP·DPU·DDP  ② 해상·내수로 전용(4): FAS·FOB·CFR·CIF.',
+        ['개요']),
+      C('`EXW` — 위험이전 시점과 비용경계는?',
+        '**Ex Works(공장인도)**. 매도인의 영업장 구내(또는 지정장소)에서 물품을 매수인의 처분하에 두는 때 위험·비용이 이전. 매도인의 의무가 최소.',
+        ['E그룹']),
+      C('`FCA` — 위험이전 시점은?',
+        '**Free Carrier(운송인인도)**. 지정장소에서 매수인이 지정한 운송인에게 인도하는 때 위험이전. (2020: 본선적재 B/L 발행 합의 가능)',
+        ['F그룹']),
+      C('`FAS` — 위험이전 시점은? (해상 전용)',
+        '**Free Alongside Ship(선측인도)**. 지정 선적항에서 물품을 **본선의 선측**(부두 또는 부선)에 두는 때 위험이전.',
+        ['F그룹']),
+      C('`FOB` — 위험이전 시점은? (해상 전용)',
+        '**Free On Board(본선인도)**. 지정 선적항에서 물품을 **본선에 적재**하는 때 위험이전.',
+        ['F그룹']),
+      C('`CFR` — 위험이전과 비용경계의 분리는? (해상 전용)',
+        '**Cost and Freight(운임포함인도)**. 위험은 선적항 **본선 적재 시** 이전, 비용(운임)은 매도인이 **목적항까지** 부담.',
+        ['C그룹']),
+      C('`CIF` — CFR 과의 차이와 보험 담보수준은? (해상 전용)',
+        '**Cost, Insurance and Freight(운임·보험료포함인도)**. CFR + 매도인이 적하보험 부보. 2020 기준 **최소담보(ICC(C))**.',
+        ['C그룹']),
+      C('`CPT` — 위험이전과 비용경계는?',
+        '**Carriage Paid To(운송비지급인도)**. 위험은 매도인이 지정한 **첫 운송인에게 인도 시** 이전, 운송비는 매도인이 목적지까지 부담.',
+        ['C그룹']),
+      C('`CIP` — CPT 와의 차이와 보험 담보수준은?',
+        '**Carriage and Insurance Paid To(운송비·보험료지급인도)**. CPT + 매도인 보험 부보. 2020 기준 **최대담보(ICC(A))**.',
+        ['C그룹']),
+      C('`DAP` — 위험이전 시점은?',
+        '**Delivered at Place(도착지인도)**. 지정 목적지에서 **양하 준비된 상태로 도착운송수단 위에서**(양하 전) 매수인의 처분하에 두는 때 위험이전.',
+        ['D그룹']),
+      C('`DPU` — DAP 와의 결정적 차이는?',
+        '**Delivered at Place Unloaded(도착지양하인도)**. 지정 목적지에서 **양하하여** 매수인의 처분하에 두는 때 위험이전. 인코텀즈 중 **유일하게 매도인이 양하 의무**를 부담.',
+        ['D그룹']),
+      C('`DDP` — 위험이전 시점과 통관·관세 부담은?',
+        '**Delivered Duty Paid(관세지급인도)**. 목적지에서 **수입통관·관세 납부**를 마치고 양하 준비상태로 처분하에 두는 때 위험이전. 매도인의 의무가 최대.',
+        ['D그룹']),
+    ],
+  },
+
+  toeic: {
+    name: 'TOEIC 어휘',
+    tag: 'TOEIC · 어휘',
+    examId: 'toeic',
+    cards: [], // 어휘는 사용자가 공식 교재/단어장으로 CSV import 하여 채운다.
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// HS 트리 드릴 데이터 (차별화 기능 §4.7 — 우선순위 1)
+// 부(21) 구조는 국제표준. 류·호는 확실한 골격만 시드하고,
+// 나머지 호(4단위)/소호는 사용자가 공식 기본서로 추가한다.
+// ─────────────────────────────────────────────────────────────
+const SEED_HS_TREE = {
+  sections: [
+    { no: 'I',     title: '산 동물·동물성 생산품',            chapters: '01–05' },
+    { no: 'II',    title: '식물성 생산품',                    chapters: '06–14' },
+    { no: 'III',   title: '동식물성·미생물성 유지',           chapters: '15' },
+    { no: 'IV',    title: '조제식료품·음료·주류·담배',        chapters: '16–24' },
+    { no: 'V',     title: '광물성 생산품',                    chapters: '25–27' },
+    { no: 'VI',    title: '화학공업 생산품',                  chapters: '28–38' },
+    { no: 'VII',   title: '플라스틱·고무와 그 제품',          chapters: '39–40' },
+    { no: 'VIII',  title: '원피·가죽·모피와 그 제품',         chapters: '41–43' },
+    { no: 'IX',    title: '목재·목탄·코르크와 그 제품',       chapters: '44–46' },
+    { no: 'X',     title: '펄프·종이와 그 제품',              chapters: '47–49' },
+    { no: 'XI',    title: '방직용 섬유와 그 제품',            chapters: '50–63' },
+    { no: 'XII',   title: '신발·모자·우산 등',                chapters: '64–67' },
+    { no: 'XIII',  title: '석·시멘트·도자·유리 제품',         chapters: '68–70' },
+    { no: 'XIV',   title: '천연·양식 진주, 귀금속',           chapters: '71' },
+    { no: 'XV',    title: '비금속(卑金屬)과 그 제품',         chapters: '72–83' },
+    { no: 'XVI',   title: '기계·전기기기와 그 부분품',        chapters: '84–85' },
+    { no: 'XVII',  title: '차량·항공기·선박 등 운송기기',     chapters: '86–89' },
+    { no: 'XVIII', title: '광학·정밀·의료·측정기기',          chapters: '90–92' },
+    { no: 'XIX',   title: '무기와 총포탄',                    chapters: '93' },
+    { no: 'XX',    title: '잡품',                             chapters: '94–96' },
+    { no: 'XXI',   title: '예술품·수집품·골동품',             chapters: '97' },
+  ],
+  // 확실한 골격 류만 시드
+  chapters: [
+    { code: '72', section: 'XV',   title: '철강',                                        seed: true },
+    { code: '73', section: 'XV',   title: '철강의 제품',                                 seed: true },
+    { code: '84', section: 'XVI',  title: '원자로·보일러·기계류와 그 부분품',            seed: true },
+    { code: '85', section: 'XVI',  title: '전기기기와 그 부분품, 녹음·영상기기 등',      seed: true },
+    { code: '87', section: 'XVII', title: '철도용 외의 차량과 그 부분품·부속품',         seed: true },
+  ],
+  // PRD §8 에서 확실하다고 명시한 호(4단위)만 시드. 그 외는 사용자 입력.
+  headings: [
+    { code: '8703', chapter: '87', title: '주로 사람 수송용 승용자동차 등',      seed: true },
+    { code: '8704', chapter: '87', title: '화물자동차',                          seed: true },
+    { code: '8517', chapter: '85', title: '전화기(스마트폰 포함) 등 통신기기',   seed: true },
+    { code: '8471', chapter: '84', title: '자동자료처리기계와 그 단위기기(컴퓨터)', seed: true },
+  ],
+};
+
+window.SEED = { SEED_EXAMS, SEED_DECKS, SEED_HS_TREE };
+
+/* ===== js/srs.js ===== */
+// srs.js — 간격 반복(Leitner 5-box) 알고리즘. PRD §6 명세 구현.
+// 상수(간격일, 오답 재등장 지연)는 settings 에서 조정 가능하도록 분리한다.
+
+const ONE_MINUTE = 60 * 1000;
+const ONE_DAY = 24 * 60 * ONE_MINUTE;
+const MAX_BOX = 5;
+const MIN_BOX = 1;
+
+// 정/오답 채점 → box·due·lastReviewed 갱신 (in place).
+// intervals: {1:0,2:1,3:3,4:7,5:16} (box → 일)
+// lapseDelayMin: 오답 시 당일 재등장 지연(분)
+function grade(card, correct, settings, now) {
+  now = now == null ? Date.now() : now;
+  const intervals = settings.intervals;
+  const lapseDelayMin = settings.lapseDelayMin != null ? settings.lapseDelayMin : 10;
+  if (correct) {
+    card.box = Math.min((card.box || 1) + 1, MAX_BOX);
+    const days = Number(intervals[card.box] != null ? intervals[card.box] : 0);
+    card.due = now + days * ONE_DAY;
+  } else {
+    card.box = MIN_BOX;
+    card.due = now + lapseDelayMin * ONE_MINUTE;
+  }
+  card.lastReviewed = now;
+  return card;
+}
+
+// due 카드 목록 (due <= now), 낮은 box → 오래된 due 순 정렬.
+function dueCards(cards, now) {
+  now = now == null ? Date.now() : now;
+  return cards
+    .filter((c) => (c.due || 0) <= now)
+    .sort((a, b) => (a.box || 1) - (b.box || 1) || (a.due || 0) - (b.due || 0));
+}
+
+// 다음 학습 카드 선택. due 가 없으면 null.
+function pickNext(cards, now) {
+  const due = dueCards(cards, now);
+  return due.length ? due[0] : null;
+}
+
+// 미리 학습(Study Ahead): due 카드가 없을 때 가장 임박한(due 가 가장 이른) 카드.
+function pickAhead(cards, now) {
+  now = now == null ? Date.now() : now;
+  const notDue = cards
+    .filter((c) => (c.due || 0) > now)
+    .sort((a, b) => (a.due || 0) - (b.due || 0));
+  return notDue.length ? notDue[0] : null;
+}
+
+// box 분포 [box1..box5] 카운트.
+function boxDistribution(cards) {
+  const dist = [0, 0, 0, 0, 0];
+  for (const c of cards) {
+    const b = Math.min(Math.max(c.box || 1, 1), 5);
+    dist[b - 1]++;
+  }
+  return dist;
+}
+
+// 진도% : (평균 box - 1) / (maxBox - 1). 빈 덱은 0.
+function deckProgress(cards) {
+  if (!cards.length) return 0;
+  const avg = cards.reduce((s, c) => s + (c.box || 1), 0) / cards.length;
+  return Math.round(((avg - 1) / (MAX_BOX - 1)) * 100);
+}
+
+window.SRS = {
+  ONE_MINUTE, ONE_DAY, MAX_BOX, MIN_BOX,
+  grade, dueCards, pickNext, pickAhead, boxDistribution, deckProgress,
+};
+
+/* ===== js/store.js ===== */
+// store.js — 상태 관리 + IndexedDB 영속화 (오프라인 우선).
+// 전체 상태를 단일 객체로 IndexedDB 에 저장/복원한다. 카드 5,000장까지 대응.
+
+const DB_NAME = 'trade-cert-drill';
+const DB_VERSION = 1;
+const STORE_NAME = 'kv';
+const STATE_KEY = 'state';
+const STATE_VERSION = 1;
+
+const DEFAULT_SETTINGS = {
+  intervals: { 1: 0, 2: 1, 3: 3, 4: 7, 5: 16 },
+  algo: 'leitner',
+  lapseDelayMin: 10,
+};
+
+// ── IndexedDB 저수준 래퍼 ──
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ── ID 생성 ──
+let _idCounter = 0;
+function uid(prefix) {
+  _idCounter++;
+  return `${prefix || 'id'}-${Date.now().toString(36)}-${_idCounter.toString(36)}`;
+}
+
+// ── 카드 정규화: 시드/누락 필드를 완전한 카드로 채운다 ──
+function normalizeCard(raw, deckId, now) {
+  return {
+    id: raw.id || uid('c'),
+    deckId,
+    front: raw.front != null ? String(raw.front) : '',
+    back: raw.back != null ? String(raw.back) : '',
+    box: raw.box != null ? clampBox(raw.box) : 1,
+    due: raw.due != null ? Number(raw.due) : 0, // 0 = 즉시 due
+    seed: !!raw.seed,
+    tags: Array.isArray(raw.tags) ? raw.tags.slice() : [],
+    createdAt: raw.createdAt != null ? Number(raw.createdAt) : now,
+    lastReviewed: raw.lastReviewed != null ? Number(raw.lastReviewed) : null,
+    note: raw.note != null ? String(raw.note) : '',
+  };
+}
+
+function clampBox(b) {
+  b = Number(b) || 1;
+  return Math.min(Math.max(Math.round(b), 1), 5);
+}
+
+// ── 시드로부터 초기 상태 생성 ──
+function buildInitialState() {
+  const now = Date.now();
+  const { SEED_EXAMS, SEED_DECKS, SEED_HS_TREE } = window.SEED;
+  const decks = {};
+  for (const [deckId, def] of Object.entries(SEED_DECKS)) {
+    decks[deckId] = {
+      name: def.name,
+      tag: def.tag,
+      examId: def.examId || null,
+      cards: def.cards.map((c) => normalizeCard(c, deckId, now)),
+    };
+  }
+  return {
+    version: STATE_VERSION,
+    settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+    exams: SEED_EXAMS.map((e) => ({ ...e })),
+    decks,
+    hsTree: JSON.parse(JSON.stringify(SEED_HS_TREE)),
+    reviewLog: [], // {ts, correct, deckId}
+    createdAt: now,
+  };
+}
+
+// ── 로드된 상태 정규화(구버전/부분 데이터 보정) ──
+function migrateState(state) {
+  if (!state || typeof state !== 'object') return buildInitialState();
+  const now = Date.now();
+  state.version = state.version || STATE_VERSION;
+  state.settings = Object.assign(
+    JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+    state.settings || {}
+  );
+  state.settings.intervals = Object.assign(
+    { ...DEFAULT_SETTINGS.intervals },
+    state.settings.intervals || {}
+  );
+  state.exams = Array.isArray(state.exams) ? state.exams : [];
+  state.decks = state.decks || {};
+  for (const [deckId, deck] of Object.entries(state.decks)) {
+    deck.cards = (deck.cards || []).map((c) => normalizeCard(c, deckId, now));
+    deck.examId = deck.examId || null;
+    deck.tag = deck.tag || '';
+    deck.name = deck.name || deckId;
+  }
+  if (!state.hsTree) state.hsTree = JSON.parse(JSON.stringify(window.SEED.SEED_HS_TREE));
+  state.reviewLog = Array.isArray(state.reviewLog) ? state.reviewLog : [];
+  return state;
+}
+
+// ── Store 클래스 ──
+class Store {
+  constructor() {
+    this.state = null;
+    this._saveTimer = null;
+    this._listeners = new Set();
+  }
+
+  async init() {
+    let saved;
+    try {
+      saved = await idbGet(STATE_KEY);
+    } catch (e) {
+      console.warn('IndexedDB load failed, starting fresh:', e);
+    }
+    this.state = saved ? migrateState(saved) : buildInitialState();
+    if (!saved) await this._flush();
+    return this.state;
+  }
+
+  onChange(fn) {
+    this._listeners.add(fn);
+    return () => this._listeners.delete(fn);
+  }
+
+  // 변경 후 호출: 리스너 통지 + 디바운스 저장.
+  commit() {
+    for (const fn of this._listeners) fn(this.state);
+    this._scheduleSave();
+  }
+
+  _scheduleSave() {
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this._flush(), 250);
+  }
+
+  async _flush() {
+    try {
+      await idbSet(STATE_KEY, this.state);
+    } catch (e) {
+      console.error('Persist failed:', e);
+    }
+  }
+
+  // 종료 직전 즉시 저장(디바운스 무시).
+  async flushNow() {
+    clearTimeout(this._saveTimer);
+    await this._flush();
+  }
+
+  // ── 덱 ──
+  getDeck(id) { return this.state.decks[id]; }
+  deckList() {
+    return Object.entries(this.state.decks).map(([id, d]) => ({ id, ...d }));
+  }
+  createDeck(name, tag, examId) {
+    const id = uid('deck');
+    this.state.decks[id] = { name: name || '새 덱', tag: tag || '', examId: examId || null, cards: [] };
+    this.commit();
+    return id;
+  }
+  renameDeck(id, name, tag, examId) {
+    const d = this.state.decks[id];
+    if (!d) return;
+    if (name != null) d.name = name;
+    if (tag != null) d.tag = tag;
+    if (examId !== undefined) d.examId = examId || null;
+    this.commit();
+  }
+  deleteDeck(id) {
+    delete this.state.decks[id];
+    this.commit();
+  }
+
+  // ── 카드 ──
+  addCard(deckId, { front, back, tags, note, box, due }) {
+    const deck = this.state.decks[deckId];
+    if (!deck) return null;
+    const card = normalizeCard(
+      { front, back, tags, note, box, due, seed: false }, deckId, Date.now()
+    );
+    deck.cards.push(card);
+    this.commit();
+    return card;
+  }
+  updateCard(deckId, cardId, patch) {
+    const deck = this.state.decks[deckId];
+    if (!deck) return;
+    const card = deck.cards.find((c) => c.id === cardId);
+    if (!card) return;
+    if (patch.front != null) card.front = patch.front;
+    if (patch.back != null) card.back = patch.back;
+    if (patch.note != null) card.note = patch.note;
+    if (patch.tags != null) card.tags = patch.tags;
+    if (patch.box != null) card.box = clampBox(patch.box);
+    if (patch.due != null) card.due = Number(patch.due);
+    this.commit();
+  }
+  deleteCard(deckId, cardId) {
+    const deck = this.state.decks[deckId];
+    if (!deck) return;
+    deck.cards = deck.cards.filter((c) => c.id !== cardId);
+    this.commit();
+  }
+
+  // 채점 로그 기록
+  logReview(deckId, correct) {
+    this.state.reviewLog.push({ ts: Date.now(), correct: !!correct, deckId });
+    // 로그 폭주 방지: 최근 5000개만 유지
+    if (this.state.reviewLog.length > 5000) {
+      this.state.reviewLog = this.state.reviewLog.slice(-5000);
+    }
+  }
+
+  // ── 설정 ──
+  updateSettings(patch) {
+    Object.assign(this.state.settings, patch);
+    this.commit();
+  }
+  setExamDate(examId, date) {
+    const ex = this.state.exams.find((e) => e.id === examId);
+    if (ex) { ex.examDate = date; this.commit(); }
+  }
+
+  // ── HS 트리 ──
+  addHsHeading(chapterCode, code, title) {
+    code = String(code).trim();
+    if (!/^\d{4}$/.test(code)) throw new Error('호는 4자리 숫자여야 합니다.');
+    const existing = this.state.hsTree.headings.find((h) => h.code === code);
+    if (existing) throw new Error('이미 존재하는 호입니다.');
+    this.state.hsTree.headings.push({ code, chapter: chapterCode, title, seed: false });
+    this.commit();
+  }
+  deleteHsHeading(code) {
+    const h = this.state.hsTree.headings.find((x) => x.code === code);
+    if (h && h.seed) throw new Error('시드(골격) 항목은 삭제할 수 없습니다.');
+    this.state.hsTree.headings = this.state.hsTree.headings.filter((x) => x.code !== code);
+    this.commit();
+  }
+  addHsChapter(code, title, section) {
+    code = String(code).trim();
+    if (!/^\d{2}$/.test(code)) throw new Error('류는 2자리 숫자여야 합니다.');
+    if (this.state.hsTree.chapters.find((c) => c.code === code)) {
+      throw new Error('이미 존재하는 류입니다.');
+    }
+    this.state.hsTree.chapters.push({ code, title, section: section || '', seed: false });
+    this.commit();
+  }
+
+  // ── Import / Export ──
+  exportJSON() {
+    return JSON.stringify(this.state, null, 2);
+  }
+  async importJSON(text) {
+    const parsed = JSON.parse(text);
+    this.state = migrateState(parsed);
+    this.commit();
+    await this.flushNow();
+  }
+
+  // CSV import: 컬럼 deck, front, back, tags[, box, due]. 헤더 인식, 미존재 덱 자동 생성.
+  // 반환: { added, skipped, createdDecks }
+  importCSV(text, { detectDuplicates = true, defaultBox = 1 } = {}) {
+    const rows = parseCSV(text);
+    if (!rows.length) return { added: 0, skipped: 0, createdDecks: [] };
+
+    // 헤더 인식
+    let header = rows[0].map((h) => h.trim().toLowerCase());
+    let dataRows;
+    const known = ['deck', 'front', 'back', 'tags', 'box', 'due'];
+    const hasHeader = header.some((h) => known.includes(h));
+    let idx;
+    if (hasHeader) {
+      idx = {
+        deck: header.indexOf('deck'),
+        front: header.indexOf('front'),
+        back: header.indexOf('back'),
+        tags: header.indexOf('tags'),
+        box: header.indexOf('box'),
+        due: header.indexOf('due'),
+      };
+      dataRows = rows.slice(1);
+    } else {
+      idx = { deck: 0, front: 1, back: 2, tags: 3, box: 4, due: 5 };
+      dataRows = rows;
+    }
+
+    // 덱 이름 → id 매핑 (기존 이름 우선)
+    const nameToId = {};
+    for (const [id, d] of Object.entries(this.state.decks)) nameToId[d.name] = id;
+
+    const createdDecks = [];
+    let added = 0, skipped = 0;
+    const now = Date.now();
+
+    // 중복 감지용: deckId → Set(front)
+    const frontSets = {};
+    if (detectDuplicates) {
+      for (const [id, d] of Object.entries(this.state.decks)) {
+        frontSets[id] = new Set(d.cards.map((c) => c.front.trim()));
+      }
+    }
+
+    for (const row of dataRows) {
+      const deckName = (row[idx.deck] || '').trim();
+      const front = (row[idx.front] || '').trim();
+      const back = idx.back >= 0 ? (row[idx.back] || '').trim() : '';
+      if (!deckName || !front) { skipped++; continue; }
+
+      let deckId = nameToId[deckName];
+      if (!deckId) {
+        deckId = this.createDeck(deckName, '', null);
+        nameToId[deckName] = deckId;
+        createdDecks.push(deckName);
+        frontSets[deckId] = new Set();
+      }
+
+      if (detectDuplicates && frontSets[deckId].has(front)) { skipped++; continue; }
+
+      const tags = idx.tags >= 0 && row[idx.tags]
+        ? row[idx.tags].split(/[;,|]/).map((t) => t.trim()).filter(Boolean)
+        : [];
+      const box = idx.box >= 0 && row[idx.box] ? clampBox(row[idx.box]) : defaultBox;
+      const due = idx.due >= 0 && row[idx.due] ? Number(row[idx.due]) : 0;
+
+      this.state.decks[deckId].cards.push(
+        normalizeCard({ front, back, tags, box, due, seed: false }, deckId, now)
+      );
+      if (detectDuplicates) frontSets[deckId].add(front);
+      added++;
+    }
+
+    this.commit();
+    return { added, skipped, createdDecks };
+  }
+}
+
+// ── 최소한의 CSV 파서 (따옴표·개행 내 필드 지원) ──
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', i = 0, inQuotes = false;
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += ch; i++; continue;
+    }
+    if (ch === '"') { inQuotes = true; i++; continue; }
+    if (ch === ',') { row.push(field); field = ''; i++; continue; }
+    if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += ch; i++;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  // 완전히 빈 행 제거
+  return rows.filter((r) => r.some((c) => c.trim() !== ''));
+}
+
+window.Store = Store;
+window.uid = uid;
+
+/* ===== js/app.js ===== */
+// app.js — UI, 뷰 라우팅, 학습 세션. 순수 DOM 렌더링(의존성 없음).
+
+const store = new Store();
+let state; // store.state 참조
+
+// 현재 뷰 상태
+const nav = { view: 'home', deckId: null };
+
+// 학습 세션 상태
+let session = null; // { deckId, card, revealed, ahead, doneToday }
+
+// ── 유틸: HTML 이스케이프 + 경량 마크업 (백틱=code, **=strong) ──
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function fmt(s) {
+  let h = esc(s);
+  h = h.replace(/`([^`]+)`/g, (_, c) => `<code>${c}</code>`);
+  h = h.replace(/\*\*([^*]+)\*\*/g, (_, c) => `<strong>${c}</strong>`);
+  h = h.replace(/\n/g, '<br>');
+  return h;
+}
+
+// ── DOM 헬퍼 ──
+function el(tag, attrs, children) {
+  const node = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') node.className = v;
+      else if (k === 'html') node.innerHTML = v;
+      else if (k === 'text') node.textContent = v;
+      else if (k.startsWith('on') && typeof v === 'function') {
+        node.addEventListener(k.slice(2).toLowerCase(), v);
+      } else if (k === 'dataset') {
+        Object.assign(node.dataset, v);
+      } else node.setAttribute(k, v);
+    }
+  }
+  if (children != null) {
+    for (const c of [].concat(children)) {
+      if (c == null || c === false) continue;
+      node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    }
+  }
+  return node;
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const target = new Date(dateStr + 'T00:00:00');
+  if (isNaN(target)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target - today) / SRS.ONE_DAY);
+}
+
+function deckDueCount(deck) {
+  return SRS.dueCards(deck.cards, Date.now()).length;
+}
+
+function reviewsToday() {
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const t0 = start.getTime();
+  return state.reviewLog.filter((r) => r.ts >= t0).length;
+}
+
+// ── 네비게이션 ──
+function go(view, deckId) {
+  nav.view = view;
+  if (deckId !== undefined) nav.deckId = deckId;
+  session = null;
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  렌더링
+// ═══════════════════════════════════════════════════════════════
+const root = () => document.getElementById('app');
+
+function render() {
+  const container = root();
+  container.innerHTML = '';
+  container.appendChild(renderNavbar());
+  const main = el('main', { class: 'container' });
+  container.appendChild(main);
+  switch (nav.view) {
+    case 'home': main.appendChild(renderHome()); break;
+    case 'study': main.appendChild(renderStudy()); break;
+    case 'cards': main.appendChild(renderCards()); break;
+    case 'hs': main.appendChild(renderHsDrill()); break;
+    case 'stats': main.appendChild(renderStats()); break;
+    case 'data': main.appendChild(renderData()); break;
+    case 'settings': main.appendChild(renderSettings()); break;
+    default: main.appendChild(renderHome());
+  }
+}
+
+function renderNavbar() {
+  const tabs = [
+    ['home', '🏠 대시보드'],
+    ['cards', '🗂️ 카드'],
+    ['hs', '🌳 HS 드릴'],
+    ['stats', '📊 통계'],
+    ['data', '💾 데이터'],
+    ['settings', '⚙️ 설정'],
+  ];
+  const bar = el('nav', { class: 'navbar', 'aria-label': '주 메뉴' }, [
+    el('button', {
+      class: 'brand', onclick: () => go('home'),
+      'aria-label': '홈으로',
+    }, '무역자격 드릴'),
+    el('div', { class: 'nav-tabs' },
+      tabs.map(([v, label]) =>
+        el('button', {
+          class: 'nav-tab' + (nav.view === v ? ' active' : ''),
+          onclick: () => go(v),
+          'aria-current': nav.view === v ? 'page' : null,
+        }, label)
+      )
+    ),
+  ]);
+  return bar;
+}
+
+// ── 홈/대시보드 ──
+function renderHome() {
+  const frag = document.createDocumentFragment();
+
+  // D-day 대시보드 (차별화 §4.7 우선순위 3)
+  const examCards = state.exams.map((ex) => {
+    const d = daysUntil(ex.examDate);
+    const deckIds = store.deckList().filter((dk) => dk.examId === ex.id);
+    const totalDue = deckIds.reduce((s, dk) => s + deckDueCount(dk), 0);
+    const totalCards = deckIds.reduce((s, dk) => s + dk.cards.length, 0);
+    let dday;
+    if (d == null) dday = el('span', { class: 'dday none' }, 'D-day 미설정');
+    else if (d > 0) dday = el('span', { class: 'dday' }, `D-${d}`);
+    else if (d === 0) dday = el('span', { class: 'dday today' }, 'D-DAY');
+    else dday = el('span', { class: 'dday past' }, `D+${-d}`);
+    return el('div', { class: 'exam-card' }, [
+      el('div', { class: 'exam-head' }, [
+        el('span', { class: 'exam-name' }, ex.name), dday,
+      ]),
+      el('div', { class: 'exam-meta' },
+        `due ${totalDue} · 전체 ${totalCards}장`),
+    ]);
+  });
+
+  frag.appendChild(el('section', {}, [
+    el('h2', {}, '시험 D-day'),
+    el('div', { class: 'exam-grid' }, examCards),
+    el('p', { class: 'hint' }, [
+      '시험일은 ',
+      el('button', { class: 'link', onclick: () => go('settings') }, '설정'),
+      ' 에서 입력하세요.',
+    ]),
+  ]));
+
+  // 오늘 요약
+  const totalDue = store.deckList().reduce((s, dk) => s + deckDueCount(dk), 0);
+  frag.appendChild(el('section', { class: 'today-summary' }, [
+    el('div', { class: 'stat-tile' }, [
+      el('div', { class: 'stat-num' }, String(totalDue)),
+      el('div', { class: 'stat-label' }, '오늘 복습할 카드'),
+    ]),
+    el('div', { class: 'stat-tile' }, [
+      el('div', { class: 'stat-num' }, String(reviewsToday())),
+      el('div', { class: 'stat-label' }, '오늘 복습한 카드'),
+    ]),
+  ]));
+
+  // 덱 목록
+  const deckRows = store.deckList().map((dk) => {
+    const due = deckDueCount(dk);
+    const prog = SRS.deckProgress(dk.cards);
+    return el('div', { class: 'deck-card' }, [
+      el('div', { class: 'deck-main' }, [
+        el('div', { class: 'deck-title-row' }, [
+          el('span', { class: 'deck-name' }, dk.name),
+          due > 0 ? el('span', { class: 'badge due' }, `due ${due}`) : el('span', { class: 'badge muted' }, '완료'),
+        ]),
+        el('div', { class: 'deck-tag' }, dk.tag || ' '),
+        el('div', { class: 'progress' }, [
+          el('div', { class: 'progress-bar', style: `width:${prog}%` }),
+        ]),
+        el('div', { class: 'deck-sub' }, `${dk.cards.length}장 · 진도 ${prog}%`),
+      ]),
+      el('div', { class: 'deck-actions' }, [
+        el('button', {
+          class: 'btn primary', disabled: dk.cards.length === 0,
+          onclick: () => startStudy(dk.id),
+        }, due > 0 ? '학습' : '미리 학습'),
+        el('button', { class: 'btn ghost', onclick: () => go('cards', dk.id) }, '카드'),
+      ]),
+    ]);
+  });
+
+  frag.appendChild(el('section', {}, [
+    el('div', { class: 'section-head' }, [
+      el('h2', {}, '덱'),
+      el('button', { class: 'btn small', onclick: newDeckPrompt }, '+ 새 덱'),
+    ]),
+    el('div', { class: 'deck-list' }, deckRows),
+  ]));
+
+  return frag;
+}
+
+function newDeckPrompt() {
+  const name = prompt('새 덱 이름:');
+  if (name && name.trim()) { store.createDeck(name.trim(), '', null); render(); }
+}
+
+// ── 학습 세션 (§4.4) ──
+function startStudy(deckId) {
+  const deck = store.getDeck(deckId);
+  if (!deck) return;
+  session = { deckId, card: null, revealed: false, ahead: false, doneToday: 0 };
+  loadNextCard();
+  nav.view = 'study';
+  render();
+  window.scrollTo(0, 0);
+}
+
+function loadNextCard() {
+  const deck = store.getDeck(session.deckId);
+  let card = SRS.pickNext(deck.cards, Date.now());
+  session.ahead = false;
+  if (!card) {
+    card = SRS.pickAhead(deck.cards, Date.now());
+    session.ahead = true;
+  }
+  session.card = card;
+  session.revealed = false;
+}
+
+function gradeCurrent(correct) {
+  const deck = store.getDeck(session.deckId);
+  SRS.grade(session.card, correct, state.settings, Date.now());
+  store.logReview(session.deckId, correct);
+  session.doneToday++;
+  store.commit();
+  loadNextCard();
+  render();
+}
+
+function renderStudy() {
+  const deck = store.getDeck(session.deckId);
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('div', { class: 'study-head' }, [
+    el('button', { class: 'btn ghost', onclick: () => go('home') }, '← 대시보드'),
+    el('span', { class: 'study-deck' }, deck.name),
+  ]));
+
+  const due = deckDueCount(deck);
+  frag.appendChild(el('div', { class: 'study-progress' }, [
+    el('span', {}, `이번 세션 ${session.doneToday}장 완료`),
+    el('span', {}, `남은 due ${due}장`),
+  ]));
+
+  if (!session.card) {
+    frag.appendChild(el('div', { class: 'done-card' }, [
+      el('div', { class: 'done-emoji' }, '🎉'),
+      el('h3', {}, '학습할 카드가 없습니다'),
+      el('p', { class: 'hint' }, deck.cards.length === 0
+        ? '이 덱에 카드가 없습니다. 카드를 추가하거나 CSV 로 import 하세요.'
+        : '모든 카드를 복습했습니다. 나중에 다시 오세요.'),
+      el('button', { class: 'btn primary', onclick: () => go('home') }, '대시보드로'),
+    ]));
+    return frag;
+  }
+
+  const card = session.card;
+
+  // box 진열대 (5칸)
+  const shelf = el('div', { class: 'box-shelf', 'aria-label': `현재 박스 ${card.box}` },
+    [1, 2, 3, 4, 5].map((b) =>
+      el('div', { class: 'box-cell' + (b === card.box ? ' current' : b < card.box ? ' filled' : '') }, [
+        el('span', { class: 'box-num' }, String(b)),
+      ])
+    )
+  );
+
+  const badges = el('div', { class: 'card-badges' }, [
+    card.seed ? el('span', { class: 'badge seed', title: '확실도 높은 골격 시드' }, '골격') : null,
+    session.ahead ? el('span', { class: 'badge ahead' }, '미리 학습') : null,
+    ...card.tags.map((t) => el('span', { class: 'badge tag' }, t)),
+  ]);
+
+  const face = el('div', { class: 'card-face' }, [
+    badges,
+    el('div', { class: 'card-front', html: fmt(card.front) }),
+    session.revealed
+      ? el('div', { class: 'card-back' }, [
+          el('hr'),
+          el('div', { html: fmt(card.back) }),
+          card.note ? el('div', { class: 'card-note', html: fmt(card.note) }) : null,
+        ])
+      : null,
+  ]);
+
+  const controls = session.revealed
+    ? el('div', { class: 'grade-controls' }, [
+        el('button', { class: 'btn wrong', onclick: () => gradeCurrent(false) }, [
+          el('span', { class: 'gk' }, '✕'), ' 틀림',
+          el('span', { class: 'key-hint' }, '1'),
+        ]),
+        el('button', { class: 'btn right', onclick: () => gradeCurrent(true) }, [
+          el('span', { class: 'gk' }, '✓'), ' 맞음',
+          el('span', { class: 'key-hint' }, '2'),
+        ]),
+      ])
+    : el('div', { class: 'grade-controls' }, [
+        el('button', {
+          class: 'btn primary wide',
+          onclick: () => { session.revealed = true; render(); },
+        }, ['정답 보기', el('span', { class: 'key-hint' }, 'Space')]),
+      ]);
+
+  frag.appendChild(shelf);
+  frag.appendChild(face);
+  frag.appendChild(controls);
+  return frag;
+}
+
+// 학습 세션 키보드 단축키
+document.addEventListener('keydown', (e) => {
+  if (nav.view !== 'study' || !session || !session.card) return;
+  if (e.target.matches('input, textarea')) return;
+  if (!session.revealed && (e.code === 'Space' || e.key === 'Enter')) {
+    e.preventDefault(); session.revealed = true; render();
+  } else if (session.revealed) {
+    if (e.key === '1') { e.preventDefault(); gradeCurrent(false); }
+    else if (e.key === '2' || e.code === 'Space') { e.preventDefault(); gradeCurrent(true); }
+  }
+});
+
+// ── 카드 관리 (§4.2) ──
+let cardSearch = '';
+function renderCards() {
+  const frag = document.createDocumentFragment();
+  const decks = store.deckList();
+  if (!nav.deckId || !store.getDeck(nav.deckId)) nav.deckId = decks[0] ? decks[0].id : null;
+
+  // 덱 선택
+  const selector = el('select', {
+    class: 'deck-select',
+    onchange: (e) => { nav.deckId = e.target.value; render(); },
+  }, decks.map((d) => el('option', { value: d.id, selected: d.id === nav.deckId }, `${d.name} (${d.cards.length})`)));
+
+  frag.appendChild(el('div', { class: 'section-head' }, [
+    el('h2', {}, '카드 관리'), selector,
+  ]));
+
+  if (!nav.deckId) {
+    frag.appendChild(el('p', { class: 'hint' }, '덱이 없습니다.'));
+    return frag;
+  }
+  const deck = store.getDeck(nav.deckId);
+
+  // 덱 도구
+  frag.appendChild(el('div', { class: 'deck-toolbar' }, [
+    el('button', { class: 'btn small', onclick: () => renameDeckPrompt(nav.deckId) }, '덱 이름·태그 변경'),
+    el('button', { class: 'btn small danger', onclick: () => deleteDeckPrompt(nav.deckId) }, '덱 삭제'),
+  ]));
+
+  // 새 카드 폼
+  frag.appendChild(renderCardForm(nav.deckId));
+
+  // 검색
+  frag.appendChild(el('input', {
+    class: 'search', type: 'search', placeholder: '카드 검색 (앞·뒤·태그)',
+    value: cardSearch,
+    oninput: (e) => { cardSearch = e.target.value; renderCardListOnly(); },
+  }));
+
+  const listWrap = el('div', { id: 'card-list', class: 'card-rows' });
+  frag.appendChild(listWrap);
+  // 초기 렌더는 render() 이후 DOM 에 붙은 뒤 채운다
+  setTimeout(renderCardListOnly, 0);
+
+  return frag;
+}
+
+function filteredCards(deck) {
+  const q = cardSearch.trim().toLowerCase();
+  if (!q) return deck.cards;
+  return deck.cards.filter((c) =>
+    c.front.toLowerCase().includes(q) ||
+    c.back.toLowerCase().includes(q) ||
+    c.tags.some((t) => t.toLowerCase().includes(q))
+  );
+}
+
+function renderCardListOnly() {
+  const wrap = document.getElementById('card-list');
+  if (!wrap) return;
+  const deck = store.getDeck(nav.deckId);
+  if (!deck) return;
+  const cards = filteredCards(deck);
+  wrap.innerHTML = '';
+  wrap.appendChild(el('div', { class: 'card-count' }, `${cards.length}장 표시`));
+  for (const c of cards) {
+    wrap.appendChild(el('div', { class: 'card-row' }, [
+      el('div', { class: 'card-row-main' }, [
+        el('div', { class: 'card-row-front', html: fmt(c.front) }),
+        el('div', { class: 'card-row-back', html: fmt(c.back) }),
+        el('div', { class: 'card-row-meta' }, [
+          el('span', { class: 'mini-badge' }, `box ${c.box}`),
+          c.seed ? el('span', { class: 'mini-badge seed' }, '골격') : null,
+          ...c.tags.map((t) => el('span', { class: 'mini-badge tag' }, t)),
+        ]),
+      ]),
+      el('div', { class: 'card-row-actions' }, [
+        el('button', { class: 'btn tiny', onclick: () => editCardPrompt(deck.id, c.id) }, '수정'),
+        el('button', { class: 'btn tiny danger', onclick: () => { if (confirm('이 카드를 삭제할까요?')) { store.deleteCard(deck.id, c.id); renderCardListOnly(); } } }, '삭제'),
+      ]),
+    ]));
+  }
+}
+
+function renderCardForm(deckId) {
+  const front = el('textarea', { class: 'inp', rows: '2', placeholder: '앞면 (문제/용어) — `백틱`으로 코드 강조' });
+  const back = el('textarea', { class: 'inp', rows: '2', placeholder: '뒷면 (정답/뜻)' });
+  const tags = el('input', { class: 'inp', placeholder: '태그 (쉼표로 구분)' });
+  return el('form', {
+    class: 'card-form',
+    onsubmit: (e) => {
+      e.preventDefault();
+      if (!front.value.trim()) return;
+      store.addCard(deckId, {
+        front: front.value.trim(), back: back.value.trim(),
+        tags: tags.value.split(',').map((t) => t.trim()).filter(Boolean),
+      });
+      front.value = ''; back.value = ''; tags.value = '';
+      front.focus();
+      renderCardListOnly();
+    },
+  }, [
+    el('div', { class: 'form-title' }, '새 카드 추가'),
+    front, back, tags,
+    el('button', { class: 'btn primary', type: 'submit' }, '추가'),
+  ]);
+}
+
+function editCardPrompt(deckId, cardId) {
+  const deck = store.getDeck(deckId);
+  const c = deck.cards.find((x) => x.id === cardId);
+  if (!c) return;
+  const nf = prompt('앞면:', c.front);
+  if (nf === null) return;
+  const nb = prompt('뒷면:', c.back);
+  if (nb === null) return;
+  const nt = prompt('태그(쉼표):', c.tags.join(', '));
+  if (nt === null) return;
+  store.updateCard(deckId, cardId, {
+    front: nf, back: nb,
+    tags: nt.split(',').map((t) => t.trim()).filter(Boolean),
+  });
+  renderCardListOnly();
+}
+
+function renameDeckPrompt(deckId) {
+  const d = store.getDeck(deckId);
+  const name = prompt('덱 이름:', d.name);
+  if (name === null) return;
+  const tag = prompt('덱 태그:', d.tag);
+  if (tag === null) return;
+  store.renameDeck(deckId, name.trim() || d.name, tag);
+  render();
+}
+
+function deleteDeckPrompt(deckId) {
+  const d = store.getDeck(deckId);
+  if (confirm(`"${d.name}" 덱과 ${d.cards.length}장의 카드를 삭제할까요?`)) {
+    store.deleteDeck(deckId);
+    nav.deckId = null;
+    render();
+  }
+}
+
+// ── HS 트리 드릴 (차별화 §4.7 우선순위 1) ──
+let hsDrill = null; // { dir, q, answered, correct }
+function renderHsDrill() {
+  const frag = document.createDocumentFragment();
+  const tree = state.hsTree;
+
+  frag.appendChild(el('h2', {}, '🌳 HS 품목분류 트리 드릴'));
+  frag.appendChild(el('div', { class: 'notice' }, [
+    el('strong', {}, '가드레일: '),
+    '부(21) 구조는 국제표준 골격입니다. 호(4단위) 이하 세부는 앱이 생성하지 않으며, ',
+    el('strong', {}, '현행 공식 기본서로 사용자가 입력'),
+    '한 항목만 드릴에 출제됩니다.',
+  ]));
+
+  // 드릴 위젯
+  const headings = tree.headings;
+  const drillBox = el('div', { class: 'drill-box' });
+  if (headings.length === 0) {
+    drillBox.appendChild(el('p', { class: 'hint' }, '드릴할 호(4단위) 항목이 없습니다. 아래에서 추가하세요.'));
+  } else {
+    if (!hsDrill) newHsQuestion();
+    drillBox.appendChild(renderHsQuestion());
+  }
+  frag.appendChild(el('section', {}, [
+    el('div', { class: 'section-head' }, [
+      el('h3', {}, '드릴'),
+      headings.length ? el('div', { class: 'drill-mode' }, [
+        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'forward' ? ' active' : ''), onclick: () => { newHsQuestion('forward'); render(); } }, '정방향(이름→호)'),
+        el('button', { class: 'btn tiny' + (hsDrill && hsDrill.dir === 'reverse' ? ' active' : ''), onclick: () => { newHsQuestion('reverse'); render(); } }, '역방향(호→이름)'),
+      ]) : null,
+    ]),
+    drillBox,
+  ]));
+
+  // 트리 브라우저
+  frag.appendChild(renderHsTreeBrowser(tree));
+
+  // 호 추가 폼
+  frag.appendChild(renderHsAddForm(tree));
+
+  return frag;
+}
+
+function newHsQuestion(dir) {
+  const headings = state.hsTree.headings;
+  if (!headings.length) { hsDrill = null; return; }
+  const useDir = dir || (hsDrill ? hsDrill.dir : (Math.random() < 0.5 ? 'forward' : 'reverse'));
+  const q = headings[Math.floor(Math.random() * headings.length)];
+  hsDrill = { dir: useDir, q, answered: false, correct: null };
+}
+
+function renderHsQuestion() {
+  const { dir, q, answered } = hsDrill;
+  const chapter = state.hsTree.chapters.find((c) => c.code === q.chapter);
+  const wrap = el('div', {});
+  if (dir === 'forward') {
+    wrap.appendChild(el('div', { class: 'drill-q' }, [
+      el('div', { class: 'drill-prompt' }, '다음 물품은 몇 호(4단위)인가?'),
+      el('div', { class: 'drill-subject' }, q.title),
+    ]));
+    if (!answered) {
+      const input = el('input', { class: 'inp code-input', inputmode: 'numeric', maxlength: '4', placeholder: '____', 'aria-label': '호 4자리' });
+      const submit = () => {
+        hsDrill.answered = true;
+        hsDrill.correct = input.value.trim() === q.code;
+        render();
+      };
+      wrap.appendChild(el('form', { class: 'drill-answer', onsubmit: (e) => { e.preventDefault(); submit(); } }, [
+        input,
+        el('button', { class: 'btn primary', type: 'submit' }, '확인'),
+      ]));
+    } else {
+      wrap.appendChild(renderHsResult(q.code, `${q.code} — ${q.title}`, chapter));
+    }
+  } else {
+    wrap.appendChild(el('div', { class: 'drill-q' }, [
+      el('div', { class: 'drill-prompt' }, '다음 호(4단위)는 무엇인가?'),
+      el('div', { class: 'drill-subject code' }, q.code),
+    ]));
+    if (!answered) {
+      wrap.appendChild(el('div', { class: 'drill-answer' }, [
+        el('button', { class: 'btn primary wide', onclick: () => { hsDrill.answered = true; render(); } }, '정답 보기'),
+      ]));
+    } else {
+      wrap.appendChild(el('div', { class: 'drill-reveal' }, [
+        el('div', { class: 'drill-answer-text' }, q.title),
+        chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
+        el('div', { class: 'self-grade' }, [
+          el('button', { class: 'btn wrong', onclick: () => { newHsQuestion(); render(); } }, '✕ 다음'),
+          el('button', { class: 'btn right', onclick: () => { newHsQuestion(); render(); } }, '✓ 다음'),
+        ]),
+      ]));
+    }
+  }
+  return wrap;
+}
+
+function renderHsResult(correctCode, answerText, chapter) {
+  const ok = hsDrill.correct;
+  return el('div', { class: 'drill-reveal' }, [
+    el('div', { class: 'drill-verdict ' + (ok ? 'ok' : 'no') }, ok ? '✓ 정답' : '✕ 오답'),
+    el('div', { class: 'drill-answer-text', html: `정답: <code>${esc(correctCode)}</code> — ${esc(answerText.split('—')[1] || '')}` }),
+    chapter ? el('div', { class: 'drill-context' }, `제${chapter.code}류 · ${chapter.title}`) : null,
+    el('button', { class: 'btn primary', onclick: () => { newHsQuestion(); render(); } }, '다음 문제'),
+  ]);
+}
+
+function renderHsTreeBrowser(tree) {
+  const details = el('details', { class: 'tree-browser' }, [
+    el('summary', {}, `트리 구조 보기 (부 ${tree.sections.length} · 류 ${tree.chapters.length} · 호 ${tree.headings.length})`),
+  ]);
+  const body = el('div', { class: 'tree-body' });
+  for (const s of tree.sections) {
+    const chapters = tree.chapters.filter((c) => c.section === s.no);
+    const secNode = el('div', { class: 'tree-section' }, [
+      el('div', { class: 'tree-sec-head' }, [
+        el('span', { class: 'tree-sec-no' }, `제${s.no}부`),
+        el('span', {}, s.title),
+        el('span', { class: 'tree-range' }, `${s.chapters}류`),
+      ]),
+    ]);
+    for (const ch of chapters) {
+      const heads = tree.headings.filter((h) => h.chapter === ch.code);
+      secNode.appendChild(el('div', { class: 'tree-chapter' }, [
+        el('span', { class: 'code' }, `제${ch.code}류`),
+        ' ', ch.title,
+        ch.seed ? el('span', { class: 'mini-badge seed' }, '골격') : null,
+      ]));
+      for (const h of heads) {
+        secNode.appendChild(el('div', { class: 'tree-heading' }, [
+          el('span', { class: 'code' }, h.code), ' ', h.title,
+          h.seed ? el('span', { class: 'mini-badge seed' }, '골격') : el('button', { class: 'btn tiny danger', onclick: () => { try { store.deleteHsHeading(h.code); if (hsDrill && hsDrill.q.code === h.code) newHsQuestion(); render(); } catch (err) { alert(err.message); } } }, '삭제'),
+        ]));
+      }
+    }
+    body.appendChild(secNode);
+  }
+  details.appendChild(body);
+  return details;
+}
+
+function renderHsAddForm(tree) {
+  const chapterSel = el('select', { class: 'inp' },
+    tree.chapters.map((c) => el('option', { value: c.code }, `제${c.code}류 · ${c.title}`)));
+  const codeInput = el('input', { class: 'inp code-input', maxlength: '4', inputmode: 'numeric', placeholder: '호 4자리 (예: 8703)' });
+  const titleInput = el('input', { class: 'inp', placeholder: '호 명칭 (공식 기본서 기준)' });
+  return el('section', {}, [
+    el('h3', {}, '호(4단위) 추가 — 공식 기본서 입력'),
+    el('form', {
+      class: 'hs-add-form',
+      onsubmit: (e) => {
+        e.preventDefault();
+        try {
+          store.addHsHeading(chapterSel.value, codeInput.value, titleInput.value.trim());
+          codeInput.value = ''; titleInput.value = '';
+          newHsQuestion();
+          render();
+        } catch (err) { alert(err.message); }
+      },
+    }, [
+      chapterSel, codeInput, titleInput,
+      el('button', { class: 'btn primary', type: 'submit' }, '호 추가'),
+    ]),
+    el('p', { class: 'hint' }, '류(2단위) 도 필요하면 추가할 수 있습니다.'),
+    (() => {
+      const cCode = el('input', { class: 'inp code-input', maxlength: '2', inputmode: 'numeric', placeholder: '류 2자리' });
+      const cTitle = el('input', { class: 'inp', placeholder: '류 명칭' });
+      const cSec = el('input', { class: 'inp', placeholder: '부 (예: XVI)' });
+      return el('form', {
+        class: 'hs-add-form',
+        onsubmit: (e) => {
+          e.preventDefault();
+          try {
+            store.addHsChapter(cCode.value, cTitle.value.trim(), cSec.value.trim());
+            cCode.value = ''; cTitle.value = ''; cSec.value = '';
+            render();
+          } catch (err) { alert(err.message); }
+        },
+      }, [cCode, cTitle, cSec, el('button', { class: 'btn', type: 'submit' }, '류 추가')]);
+    })(),
+  ]);
+}
+
+// ── 통계 (§4.6) ──
+function renderStats() {
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('h2', {}, '📊 통계'));
+
+  const totalCards = store.deckList().reduce((s, d) => s + d.cards.length, 0);
+  const allReviews = state.reviewLog.length;
+  const correctReviews = state.reviewLog.filter((r) => r.correct).length;
+  const accuracy = allReviews ? Math.round((correctReviews / allReviews) * 100) : 0;
+
+  frag.appendChild(el('div', { class: 'stats-tiles' }, [
+    statTile(String(totalCards), '전체 카드'),
+    statTile(String(reviewsToday()), '오늘 복습'),
+    statTile(String(allReviews), '누적 복습'),
+    statTile(accuracy + '%', '누적 정답률'),
+  ]));
+
+  // 덱별 box 분포
+  frag.appendChild(el('h3', {}, '덱별 진도 · box 분포'));
+  for (const dk of store.deckList()) {
+    if (!dk.cards.length) continue;
+    const dist = SRS.boxDistribution(dk.cards);
+    const max = Math.max(...dist, 1);
+    frag.appendChild(el('div', { class: 'dist-block' }, [
+      el('div', { class: 'dist-head' }, [
+        el('span', {}, dk.name),
+        el('span', { class: 'muted' }, `진도 ${SRS.deckProgress(dk.cards)}%`),
+      ]),
+      el('div', { class: 'dist-bars' }, dist.map((n, i) =>
+        el('div', { class: 'dist-col' }, [
+          el('div', { class: 'dist-bar-wrap' }, [
+            el('div', { class: 'dist-bar b' + (i + 1), style: `height:${(n / max) * 100}%`, title: `${n}장` }),
+          ]),
+          el('div', { class: 'dist-x' }, `${i + 1}`),
+          el('div', { class: 'dist-n' }, String(n)),
+        ])
+      )),
+    ]));
+  }
+
+  // 최근 7일 히트맵
+  frag.appendChild(el('h3', {}, '최근 7일 복습'));
+  frag.appendChild(renderHeatmap());
+
+  return frag;
+}
+
+function statTile(num, label) {
+  return el('div', { class: 'stat-tile' }, [
+    el('div', { class: 'stat-num' }, num),
+    el('div', { class: 'stat-label' }, label),
+  ]);
+}
+
+function renderHeatmap() {
+  const days = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * SRS.ONE_DAY);
+    const t0 = d.getTime(), t1 = t0 + SRS.ONE_DAY;
+    const count = state.reviewLog.filter((r) => r.ts >= t0 && r.ts < t1).length;
+    days.push({ d, count });
+  }
+  const max = Math.max(...days.map((x) => x.count), 1);
+  return el('div', { class: 'heatmap' }, days.map(({ d, count }) => {
+    const level = count === 0 ? 0 : Math.ceil((count / max) * 4);
+    return el('div', { class: 'heat-day' }, [
+      el('div', { class: 'heat-cell l' + level, title: `${count}회` }, count ? String(count) : ''),
+      el('div', { class: 'heat-label' }, `${d.getMonth() + 1}/${d.getDate()}`),
+    ]);
+  }));
+}
+
+// ── 데이터 입출력 (§4.5) ──
+function renderData() {
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('h2', {}, '💾 데이터 백업 · 가져오기'));
+
+  // JSON export
+  frag.appendChild(el('section', {}, [
+    el('h3', {}, 'JSON 전체 백업'),
+    el('p', { class: 'hint' }, '모든 덱·카드·진도·설정을 하나의 파일로 내보냅니다.'),
+    el('button', { class: 'btn primary', onclick: exportJSON }, '⬇ JSON 내보내기'),
+  ]));
+
+  // JSON import
+  frag.appendChild(el('section', {}, [
+    el('h3', {}, 'JSON 복원'),
+    el('p', { class: 'notice' }, '⚠ 현재 데이터를 백업 파일로 완전히 대체합니다.'),
+    fileInput('application/json,.json', async (text) => {
+      if (!confirm('현재 데이터를 이 백업으로 덮어쓸까요?')) return;
+      try {
+        await store.importJSON(text);
+        hsDrill = null;
+        alert('복원 완료.');
+        go('home');
+      } catch (e) { alert('가져오기 실패: ' + e.message); }
+    }),
+  ]));
+
+  // CSV import
+  const resultBox = el('div', { class: 'import-result' });
+  frag.appendChild(el('section', {}, [
+    el('h3', {}, 'CSV 대량 가져오기'),
+    el('p', { class: 'hint' }, [
+      '컬럼: ', el('code', {}, 'deck, front, back, tags'),
+      ' (선택: ', el('code', {}, 'box, due'),
+      '). 헤더 행 자동 인식, 없는 덱은 자동 생성, 같은 덱+앞면 중복은 건너뜁니다.',
+    ]),
+    el('a', { class: 'link', href: sampleCSVUrl(), download: 'sample-cards.csv' }, '샘플 CSV 내려받기'),
+    fileInput('text/csv,.csv,text/plain', (text) => {
+      const res = store.importCSV(text, { detectDuplicates: true });
+      resultBox.innerHTML = '';
+      resultBox.appendChild(el('div', { class: 'notice ok' },
+        `추가 ${res.added}장 · 건너뜀 ${res.skipped}장` +
+        (res.createdDecks.length ? ` · 새 덱: ${res.createdDecks.join(', ')}` : '')));
+    }),
+    resultBox,
+  ]));
+
+  return frag;
+}
+
+function fileInput(accept, onText) {
+  const input = el('input', {
+    type: 'file', accept, class: 'file-input',
+    onchange: (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => onText(reader.result);
+      reader.readAsText(f, 'utf-8');
+      e.target.value = '';
+    },
+  });
+  return el('label', { class: 'file-label btn' }, ['파일 선택', input]);
+}
+
+function download(filename, text, mime) {
+  const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = el('a', { href: url, download: filename });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function exportJSON() {
+  const stamp = new Date().toISOString().slice(0, 10);
+  download(`trade-cert-drill-${stamp}.json`, store.exportJSON(), 'application/json');
+}
+
+function sampleCSVUrl() {
+  const csv = 'deck,front,back,tags\n' +
+    '무역영어,`FTA`,Free Trade Agreement — 자유무역협정,약어\n' +
+    '"품목분류(HS)","제39류는?","플라스틱과 그 제품","구조;류"\n';
+  return 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+}
+
+// ── 설정 (§4.3, D-day) ──
+function renderSettings() {
+  const frag = document.createDocumentFragment();
+  frag.appendChild(el('h2', {}, '⚙️ 설정'));
+
+  // 시험일
+  frag.appendChild(el('section', {}, [
+    el('h3', {}, '시험일 (D-day)'),
+    el('div', { class: 'settings-list' }, state.exams.map((ex) =>
+      el('label', { class: 'setting-row' }, [
+        el('span', {}, ex.name),
+        el('input', {
+          type: 'date', value: ex.examDate || '',
+          onchange: (e) => { store.setExamDate(ex.id, e.target.value); },
+        }),
+      ])
+    )),
+  ]));
+
+  // 간격 상수
+  const iv = state.settings.intervals;
+  const inputs = {};
+  frag.appendChild(el('section', {}, [
+    el('h3', {}, '라이트너 간격 (box → 일)'),
+    el('div', { class: 'interval-grid' }, [1, 2, 3, 4, 5].map((b) => {
+      const input = el('input', { type: 'number', min: '0', value: String(iv[b]), class: 'inp' });
+      inputs[b] = input;
+      return el('label', { class: 'interval-cell' }, [
+        el('span', {}, `box ${b}`), input,
+      ]);
+    })),
+    el('label', { class: 'setting-row' }, [
+      el('span', {}, '오답 재등장 지연(분)'),
+      (() => { inputs.lapse = el('input', { type: 'number', min: '1', value: String(state.settings.lapseDelayMin), class: 'inp' }); return inputs.lapse; })(),
+    ]),
+    el('button', {
+      class: 'btn primary',
+      onclick: () => {
+        const intervals = {};
+        for (const b of [1, 2, 3, 4, 5]) intervals[b] = Math.max(0, Number(inputs[b].value) || 0);
+        store.updateSettings({
+          intervals,
+          lapseDelayMin: Math.max(1, Number(inputs.lapse.value) || 10),
+        });
+        alert('저장되었습니다.');
+      },
+    }, '간격 저장'),
+    el('p', { class: 'hint' }, '기본값: box1=0, box2=1, box3=3, box4=7, box5=16 일.'),
+  ]));
+
+  // 가드레일 고지
+  frag.appendChild(el('section', { class: 'guardrail-note' }, [
+    el('h3', {}, '콘텐츠 정확성 안내'),
+    el('p', {}, [
+      '시드 카드는 ', el('span', { class: 'badge seed' }, '골격'),
+      ' 배지로 표시된 ',
+      el('strong', {}, '확실도 높은 골격'), ' 만 제공합니다. HS 세부 호·소호(6·10단위), ',
+      'PSR 협정별 계산식, 법령 조문·수치는 앱이 생성하지 않으니 ',
+      el('strong', {}, '현행 공식 기본서로 직접 입력'), '하세요.',
+    ]),
+  ]));
+
+  return frag;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  부트스트랩
+// ═══════════════════════════════════════════════════════════════
+async function boot() {
+  state = await store.init();
+  window.addEventListener('beforeunload', () => { store.flushNow(); });
+  render();
+  // Service Worker 등록 (오프라인)
+  // (single-file build: service worker omitted)
+}
+
+boot();
+
+</script>

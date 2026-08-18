@@ -1,0 +1,20 @@
+{
+  "name": "무역자격 드릴 (Trade Cert Study Drill)",
+  "short_name": "무역드릴",
+  "description": "간격 반복(SRS) 기반 무역 자격 암기 학습 앱",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f141b",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
