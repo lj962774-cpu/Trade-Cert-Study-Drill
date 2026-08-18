@@ -90,6 +90,7 @@ function render() {
   switch (nav.view) {
     case 'home': main.appendChild(renderHome()); break;
     case 'study': main.appendChild(renderStudy()); break;
+    case 'learn': main.appendChild(renderLearn()); break;
     case 'cards': main.appendChild(renderCards()); break;
     case 'hs': main.appendChild(renderHsDrill()); break;
     case 'stats': main.appendChild(renderStats()); break;
@@ -190,10 +191,12 @@ function renderHome() {
         el('div', { class: 'deck-sub' }, `${dk.cards.length}장 · 진도 ${prog}%`),
       ]),
       el('div', { class: 'deck-actions' }, [
+        el('button', { class: 'btn', disabled: dk.cards.length === 0,
+          onclick: () => startLearn(dk.id) }, '📖 학습'),
         el('button', {
           class: 'btn primary', disabled: dk.cards.length === 0,
           onclick: () => startStudy(dk.id),
-        }, due > 0 ? '학습' : '미리 학습'),
+        }, due > 0 ? `복습 ${due}` : '복습'),
         el('button', { class: 'btn ghost', onclick: () => go('cards', dk.id) }, '카드'),
       ]),
     ]);
@@ -287,7 +290,7 @@ function renderStudy() {
 
   const badges = el('div', { class: 'card-badges' }, [
     card.seed ? el('span', { class: 'badge seed', title: '확실도 높은 골격 시드' }, '골격') : null,
-    session.ahead ? el('span', { class: 'badge ahead' }, '미리 학습') : null,
+    session.ahead ? el('span', { class: 'badge ahead' }, '미리 복습') : null,
     ...card.tags.map((t) => el('span', { class: 'badge tag' }, t)),
   ]);
 
@@ -327,7 +330,7 @@ function renderStudy() {
   return frag;
 }
 
-// 학습 세션 키보드 단축키
+// 복습(SRS) 세션 키보드 단축키
 document.addEventListener('keydown', (e) => {
   if (nav.view !== 'study' || !session || !session.card) return;
   if (e.target.matches('input, textarea')) return;
@@ -336,6 +339,133 @@ document.addEventListener('keydown', (e) => {
   } else if (session.revealed) {
     if (e.key === '1') { e.preventDefault(); gradeCurrent(false); }
     else if (e.key === '2' || e.code === 'Space') { e.preventDefault(); gradeCurrent(true); }
+  }
+});
+
+// ── 학습(읽기) 모드 — 채점 없이 앞·뒤를 함께 읽으며 익힌다 ──
+let learn = null; // { deckId, order:[cards], idx, tag, shuffle, hide }
+
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startLearn(deckId) {
+  const deck = store.getDeck(deckId);
+  if (!deck) return;
+  learn = { deckId, idx: 0, tag: null, shuffle: false, hide: false };
+  buildLearnOrder();
+  nav.view = 'learn';
+  render();
+  window.scrollTo(0, 0);
+}
+
+function buildLearnOrder() {
+  const deck = store.getDeck(learn.deckId);
+  let cards = deck.cards.slice();
+  if (learn.tag) cards = cards.filter((c) => c.tags.includes(learn.tag));
+  learn.order = learn.shuffle ? shuffled(cards) : cards;
+  if (learn.idx >= learn.order.length) learn.idx = 0;
+  if (learn.idx < 0) learn.idx = 0;
+}
+
+function learnStep(delta) {
+  if (!learn.order.length) return;
+  learn.idx = (learn.idx + delta + learn.order.length) % learn.order.length;
+  render();
+}
+
+function renderLearn() {
+  const deck = store.getDeck(learn.deckId);
+  const frag = document.createDocumentFragment();
+  if (!deck) { frag.appendChild(el('p', { class: 'hint' }, '덱을 찾을 수 없습니다.')); return frag; }
+
+  frag.appendChild(el('div', { class: 'study-head' }, [
+    el('button', { class: 'btn ghost', onclick: () => go('home') }, '← 대시보드'),
+    el('span', { class: 'study-deck' }, `📖 ${deck.name} · 학습`),
+  ]));
+
+  // 태그 필터 칩
+  const tags = Array.from(new Set(deck.cards.flatMap((c) => c.tags))).sort();
+  if (tags.length) {
+    frag.appendChild(el('div', { class: 'learn-tags' }, [
+      el('button', { class: 'chip' + (learn.tag == null ? ' active' : ''),
+        onclick: () => { learn.tag = null; learn.idx = 0; buildLearnOrder(); render(); } }, '전체'),
+      ...tags.map((t) => el('button', {
+        class: 'chip' + (learn.tag === t ? ' active' : ''),
+        onclick: () => { learn.tag = t; learn.idx = 0; buildLearnOrder(); render(); },
+      }, t)),
+    ]));
+  }
+
+  // 옵션 토글
+  frag.appendChild(el('div', { class: 'learn-opts' }, [
+    el('button', { class: 'btn tiny' + (learn.shuffle ? ' active' : ''),
+      onclick: () => { learn.shuffle = !learn.shuffle; learn.idx = 0; buildLearnOrder(); render(); } },
+      learn.shuffle ? '🔀 무작위' : '↕ 순서대로'),
+    el('button', { class: 'btn tiny' + (learn.hide ? ' active' : ''),
+      onclick: () => { learn.hide = !learn.hide; render(); } },
+      learn.hide ? '🙈 정답 가림' : '👁 정답 표시'),
+  ]));
+
+  const cards = learn.order;
+  if (!cards.length) {
+    frag.appendChild(el('div', { class: 'done-card' }, [
+      el('div', { class: 'done-emoji' }, '📭'),
+      el('p', { class: 'hint' }, learn.tag ? `'${learn.tag}' 태그 카드가 없습니다.` : '이 덱에 카드가 없습니다.'),
+    ]));
+    return frag;
+  }
+
+  const card = cards[learn.idx];
+  const showBack = !learn.hide || learn._peek;
+
+  frag.appendChild(el('div', { class: 'learn-progress' }, [
+    el('span', {}, `${learn.idx + 1} / ${cards.length}`),
+    el('span', {}, deck.tag || ''),
+  ]));
+
+  const badges = el('div', { class: 'card-badges' }, [
+    card.seed ? el('span', { class: 'badge seed', title: '확실도 높은 골격 시드' }, '골격') : null,
+    ...card.tags.map((t) => el('span', { class: 'badge tag' }, t)),
+  ]);
+
+  frag.appendChild(el('div', { class: 'card-face learn-face' }, [
+    badges,
+    el('div', { class: 'card-front', html: fmt(card.front) }),
+    showBack
+      ? el('div', { class: 'card-back' }, [
+          el('hr'),
+          el('div', { html: fmt(card.back) }),
+          card.note ? el('div', { class: 'card-note', html: fmt(card.note) }) : null,
+        ])
+      : el('button', { class: 'btn ghost reveal-btn', onclick: () => { learn._peek = true; render(); } }, '정답 보기 (Space)'),
+  ]));
+
+  frag.appendChild(el('div', { class: 'learn-nav' }, [
+    el('button', { class: 'btn', onclick: () => { learn._peek = false; learnStep(-1); } }, '← 이전'),
+    el('button', { class: 'btn primary', onclick: () => { learn._peek = false; learnStep(1); } }, '다음 →'),
+  ]));
+
+  frag.appendChild(el('p', { class: 'hint learn-hint' }, '← → 이동 · Space 정답 · 채점은 없습니다. 복습(SRS)은 대시보드의 "복습".'));
+
+  return frag;
+}
+
+// 학습(읽기) 모드 키보드 단축키
+document.addEventListener('keydown', (e) => {
+  if (nav.view !== 'learn' || !learn || !learn.order || !learn.order.length) return;
+  if (e.target.matches('input, textarea, select')) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); learn._peek = false; learnStep(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); learn._peek = false; learnStep(-1); }
+  else if (e.code === 'Space') {
+    e.preventDefault();
+    if (learn.hide && !learn._peek) { learn._peek = true; render(); }
+    else { learn._peek = false; learnStep(1); }
   }
 });
 
